@@ -29,7 +29,7 @@ import (
 	"github.com/cortexlabs/cortex/pkg/lib/json"
 )
 
-var cachedCliConfig *CliConfig
+var cachedCliConfig *CLIConfig
 var cachedCliConfigErrs []error
 var localDir string
 
@@ -45,26 +45,15 @@ func init() {
 	}
 }
 
-type CliConfig struct {
+type CLIConfig struct {
 	CortexURL          string `json:"cortex_url"`
 	AWSAccessKeyID     string `json:"aws_access_key_id"`
 	AWSSecretAccessKey string `json:"aws_secret_access_key"`
 }
 
-func getPromptValidation(defaults *CliConfig) *cr.PromptValidation {
+func getPromptValidation(defaults *CLIConfig) *cr.PromptValidation {
 	return &cr.PromptValidation{
 		PromptItemValidations: []*cr.PromptItemValidation{
-			{
-				StructField: "CortexURL",
-				PromptOpts: &cr.PromptOptions{
-					Prompt: "Enter Cortex operator endpoint",
-				},
-				StringValidation: &cr.StringValidation{
-					Required:  true,
-					Default:   defaults.CortexURL,
-					Validator: cr.GetURLValidator(false, false),
-				},
-			},
 			{
 				StructField: "AWSAccessKeyID",
 				PromptOpts: &cr.PromptOptions{
@@ -96,14 +85,6 @@ var fileValidation = &cr.StructValidation{
 	AllowExtraFields: true,
 	StructFieldValidations: []*cr.StructFieldValidation{
 		{
-			Key:         "cortex_url",
-			StructField: "CortexURL",
-			StringValidation: &cr.StringValidation{
-				Required:  true,
-				Validator: cr.GetURLValidator(false, false),
-			},
-		},
-		{
 			Key:         "aws_access_key_id",
 			StructField: "AWSAccessKeyID",
 			StringValidation: &cr.StringValidation{
@@ -124,13 +105,13 @@ func configPath() string {
 	return filepath.Join(localDir, flagEnv+".json")
 }
 
-func readCliConfig() (*CliConfig, []error) {
+func readCLIConfig() (*CLIConfig, []error) {
 	if cachedCliConfig != nil {
 		return cachedCliConfig, cachedCliConfigErrs
 	}
 
 	configPath := configPath()
-	cachedCliConfig = &CliConfig{}
+	cachedCliConfig = &CLIConfig{}
 
 	configBytes, err := files.ReadFileBytes(configPath)
 	if err != nil {
@@ -147,18 +128,18 @@ func readCliConfig() (*CliConfig, []error) {
 	return cachedCliConfig, errors.WrapMultiple(cachedCliConfigErrs, configPath)
 }
 
-func getValidCliConfig() *CliConfig {
-	cliConfig, errs := readCliConfig()
+func getValidCLIConfig() *CLIConfig {
+	cliConfig, errs := readCLIConfig()
 	if errs != nil && len(errs) > 0 {
 		cliConfig = configure()
 	}
 	return cliConfig
 }
 
-func getDefaults() *CliConfig {
-	defaults, _ := readCliConfig()
+func getDefaults() *CLIConfig {
+	defaults, _ := readCLIConfig()
 	if defaults == nil {
-		defaults = &CliConfig{}
+		defaults = &CLIConfig{}
 	}
 
 	if defaults.AWSAccessKeyID == "" && os.Getenv("AWS_ACCESS_KEY_ID") != "" {
@@ -167,17 +148,14 @@ func getDefaults() *CliConfig {
 	if defaults.AWSSecretAccessKey == "" && os.Getenv("AWS_SECRET_ACCESS_KEY") != "" {
 		defaults.AWSSecretAccessKey = os.Getenv("AWS_SECRET_ACCESS_KEY")
 	}
-	if defaults.CortexURL == "" && os.Getenv("CORTEX_OPERATOR_ENDPOINT") != "" {
-		defaults.CortexURL = os.Getenv("CORTEX_OPERATOR_ENDPOINT")
-	}
 
 	return defaults
 }
 
-func configure() *CliConfig {
+func configure() *CLIConfig {
 	defaults := getDefaults()
 
-	cachedCliConfig = &CliConfig{}
+	cachedCliConfig = &CLIConfig{}
 	fmt.Println("\nEnvironment: " + flagEnv + "\n")
 	err := cr.ReadPrompt(cachedCliConfig, getPromptValidation(defaults))
 	if err != nil {

@@ -22,10 +22,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cortexlabs/cortex/pkg/lib/errors"
-	"github.com/cortexlabs/cortex/pkg/lib/json"
-	s "github.com/cortexlabs/cortex/pkg/lib/strings"
-	"github.com/cortexlabs/cortex/pkg/lib/zip"
-	"github.com/cortexlabs/cortex/pkg/operator/api/schema"
 )
 
 var flagDeployForce bool
@@ -47,35 +43,11 @@ var deployCmd = &cobra.Command{
 
 func deploy(force bool, ignoreCache bool) {
 	root := mustAppRoot()
-	_, err := appNameFromConfig() // Check proper app.yaml
+	appName, err := appNameFromConfig()
 	if err != nil {
 		errors.Exit(err)
 	}
 
-	zipInput := &zip.Input{
-		FileLists: []zip.FileListInput{
-			{
-				Sources:      allConfigPaths(root),
-				RemovePrefix: root,
-			},
-		},
-	}
-
-	params := map[string]string{
-		"environment": flagEnv,
-		"force":       s.Bool(force),
-		"ignoreCache": s.Bool(ignoreCache),
-	}
-
-	response, err := HTTPUploadZip("/deploy", zipInput, "config.zip", params)
-	if err != nil {
-		errors.Exit(err)
-	}
-
-	var deployResponse schema.DeployResponse
-	if err := json.Unmarshal(response, &deployResponse); err != nil {
-		errors.Exit(err, "/deploy", "response", string(response))
-	}
-
-	fmt.Println(deployResponse.Message)
+	fmt.Println(root)
+	fmt.Println(appName)
 }

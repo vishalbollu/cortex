@@ -32,6 +32,7 @@ import (
 	libtime "github.com/cortexlabs/cortex/pkg/lib/time"
 	"github.com/cortexlabs/cortex/pkg/lib/urls"
 	"github.com/cortexlabs/cortex/pkg/operator/api/resource"
+	"github.com/cortexlabs/cortex/pkg/operator/api/schema"
 )
 
 var predictPrintJSON bool
@@ -60,13 +61,12 @@ var predictCmd = &cobra.Command{
 	Long:  "Make predictions.",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(args)
+
 		apiName := args[0]
 		samplesJSONPath := args[1]
 
-		resourcesRes, err := getResourcesResponse()
-		if err != nil {
-			errors.Exit(err)
-		}
+		resourcesRes := &schema.GetResourcesResponse{}
 
 		apiGroupStatus := resourcesRes.APIGroupStatuses[apiName]
 		if apiGroupStatus == nil {

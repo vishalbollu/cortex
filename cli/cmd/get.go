@@ -24,9 +24,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cortexlabs/cortex/pkg/lib/errors"
-	"github.com/cortexlabs/cortex/pkg/lib/json"
-	"github.com/cortexlabs/cortex/pkg/lib/msgpack"
 	"github.com/cortexlabs/cortex/pkg/lib/sets/strset"
 	s "github.com/cortexlabs/cortex/pkg/lib/strings"
 	libtime "github.com/cortexlabs/cortex/pkg/lib/time"
@@ -41,11 +38,10 @@ func init() {
 	addAppNameFlag(getCmd)
 	addEnvFlag(getCmd)
 	addWatchFlag(getCmd)
-	addResourceTypesToHelp(getCmd)
 }
 
 var getCmd = &cobra.Command{
-	Use:   "get [RESOURCE_TYPE] [RESOURCE_NAME]",
+	Use:   "get [RESOURCE_NAME]",
 	Short: "get information about resources",
 	Long:  "Get information about resources.",
 	Args:  cobra.RangeArgs(0, 2),
@@ -57,226 +53,12 @@ var getCmd = &cobra.Command{
 }
 
 func runGet(cmd *cobra.Command, args []string) (string, error) {
-	resourcesRes, err := getResourcesResponse()
-	if err != nil {
-		return "", err
-	}
-
-	switch len(args) {
-	case 0:
-		return allResourcesStr(resourcesRes), nil
-
-	case 1:
-		resourceNameOrType := args[0]
-
-		resourceType, err := resource.VisibleResourceTypeFromPrefix(resourceNameOrType)
-		if err != nil {
-			if rerr, ok := err.(resource.Error); ok && rerr.Kind != resource.ErrInvalidType {
-				return "", err
-			}
-		} else {
-			return resourcesByTypeStr(resourceType, resourcesRes)
-		}
-
-		if _, err = resourcesRes.Context.VisibleResourceByName(resourceNameOrType); err != nil {
-			if rerr, ok := err.(resource.Error); ok && rerr.Kind == resource.ErrNameNotFound {
-				return "", resource.ErrorNameOrTypeNotFound(resourceNameOrType)
-			}
-			return "", err
-		}
-
-		return resourceByNameStr(resourceNameOrType, resourcesRes)
-
-	case 2:
-		userResourceType := args[0]
-		resourceName := args[1]
-		resourceType, err := resource.VisibleResourceTypeFromPrefix(userResourceType)
-		if err != nil {
-			return "", resource.ErrorInvalidType(userResourceType)
-		}
-		return resourceByNameAndTypeStr(resourceName, resourceType, resourcesRes)
-	}
-
-	return "", errors.New("too many args") // unexpected
-}
-
-func getResourcesResponse() (*schema.GetResourcesResponse, error) {
 	appName, err := AppNameFromFlagOrConfig()
 	if err != nil {
-		return nil, err
-	}
-
-	params := map[string]string{"appName": appName}
-	httpResponse, err := HTTPGet("/resources", params)
-	if err != nil {
-		return nil, err
-	}
-
-	var resourcesRes schema.GetResourcesResponse
-	if err = json.Unmarshal(httpResponse, &resourcesRes); err != nil {
-		return nil, err
-	}
-
-	return &resourcesRes, nil
-}
-
-func resourceByNameStr(resourceName string, resourcesRes *schema.GetResourcesResponse) (string, error) {
-	rs, err := resourcesRes.Context.VisibleResourceByName(resourceName)
-	if err != nil {
 		return "", err
 	}
-	switch resourceType := rs.GetResourceType(); resourceType {
-	case resource.PythonPackageType:
-		return describePythonPackage(resourceName, resourcesRes)
-	case resource.RawColumnType:
-		return describeRawColumn(resourceName, resourcesRes)
-	case resource.AggregateType:
-		return describeAggregate(resourceName, resourcesRes)
-	case resource.TransformedColumnType:
-		return describeTransformedColumn(resourceName, resourcesRes)
-	case resource.TrainingDatasetType:
-		return describeTrainingDataset(resourceName, resourcesRes)
-	case resource.ModelType:
-		return describeModel(resourceName, resourcesRes)
-	case resource.APIType:
-		return describeAPI(resourceName, resourcesRes)
-	default:
-		return "", resource.ErrorInvalidType(resourceType.String())
-	}
-}
 
-func resourcesByTypeStr(resourceType resource.Type, resourcesRes *schema.GetResourcesResponse) (string, error) {
-	switch resourceType {
-	case resource.PythonPackageType:
-		return "\n" + pythonPackagesStr(resourcesRes.DataStatuses, resourcesRes.Context), nil
-	case resource.RawColumnType:
-		return "\n" + rawColumnsStr(resourcesRes.DataStatuses, resourcesRes.Context), nil
-	case resource.AggregateType:
-		return "\n" + aggregatesStr(resourcesRes.DataStatuses, resourcesRes.Context), nil
-	case resource.TransformedColumnType:
-		return "\n" + transformedColumnsStr(resourcesRes.DataStatuses, resourcesRes.Context), nil
-	case resource.TrainingDatasetType:
-		return "\n" + trainingDataStr(resourcesRes.DataStatuses, resourcesRes.Context), nil
-	case resource.ModelType:
-		return "\n" + modelsStr(resourcesRes.DataStatuses, resourcesRes.Context), nil
-	case resource.APIType:
-		return "\n" + apisStr(resourcesRes.APIGroupStatuses), nil
-	default:
-		return "", resource.ErrorInvalidType(resourceType.String())
-	}
-}
-
-func resourceByNameAndTypeStr(resourceName string, resourceType resource.Type, resourcesRes *schema.GetResourcesResponse) (string, error) {
-	switch resourceType {
-	case resource.PythonPackageType:
-		return describePythonPackage(resourceName, resourcesRes)
-	case resource.RawColumnType:
-		return describeRawColumn(resourceName, resourcesRes)
-	case resource.AggregateType:
-		return describeAggregate(resourceName, resourcesRes)
-	case resource.TransformedColumnType:
-		return describeTransformedColumn(resourceName, resourcesRes)
-	case resource.TrainingDatasetType:
-		return describeTrainingDataset(resourceName, resourcesRes)
-	case resource.ModelType:
-		return describeModel(resourceName, resourcesRes)
-	case resource.APIType:
-		return describeAPI(resourceName, resourcesRes)
-	default:
-		return "", resource.ErrorInvalidType(resourceType.String())
-	}
-}
-
-func allResourcesStr(resourcesRes *schema.GetResourcesResponse) string {
-	out := ""
-	out += titleStr("Python Packages")
-	out += pythonPackagesStr(resourcesRes.DataStatuses, resourcesRes.Context)
-	out += titleStr("Raw Columns")
-	out += rawColumnsStr(resourcesRes.DataStatuses, resourcesRes.Context)
-	out += titleStr("Aggregates")
-	out += aggregatesStr(resourcesRes.DataStatuses, resourcesRes.Context)
-	out += titleStr("Transformed Columns")
-	out += transformedColumnsStr(resourcesRes.DataStatuses, resourcesRes.Context)
-	out += titleStr("Training Datasets")
-	out += trainingDataStr(resourcesRes.DataStatuses, resourcesRes.Context)
-	out += titleStr("Models")
-	out += modelsStr(resourcesRes.DataStatuses, resourcesRes.Context)
-	out += titleStr("APIs")
-	out += apisStr(resourcesRes.APIGroupStatuses)
-	return out
-}
-
-func pythonPackagesStr(dataStatuses map[string]*resource.DataStatus, ctx *context.Context) string {
-	if len(ctx.PythonPackages) == 0 {
-		return "None\n"
-	}
-
-	strings := make(map[string]string)
-	for name, pythonPackage := range ctx.PythonPackages {
-		strings[name] = dataResourceRow(name, pythonPackage, dataStatuses)
-	}
-	return dataResourcesHeader() + strMapToStr(strings)
-}
-
-func rawColumnsStr(dataStatuses map[string]*resource.DataStatus, ctx *context.Context) string {
-	if len(ctx.RawColumns) == 0 {
-		return "None\n"
-	}
-
-	strings := make(map[string]string)
-	for name, rawColumn := range ctx.RawColumns {
-		strings[name] = dataResourceRow(name, rawColumn, dataStatuses)
-	}
-	return dataResourcesHeader() + strMapToStr(strings)
-}
-
-func aggregatesStr(dataStatuses map[string]*resource.DataStatus, ctx *context.Context) string {
-	if len(ctx.Aggregates) == 0 {
-		return "None\n"
-	}
-
-	strings := make(map[string]string)
-	for name, aggregate := range ctx.Aggregates {
-		strings[name] = dataResourceRow(name, aggregate, dataStatuses)
-	}
-	return dataResourcesHeader() + strMapToStr(strings)
-}
-
-func transformedColumnsStr(dataStatuses map[string]*resource.DataStatus, ctx *context.Context) string {
-	if len(ctx.TransformedColumns) == 0 {
-		return "None\n"
-	}
-
-	strings := make(map[string]string)
-	for name, transformedColumn := range ctx.TransformedColumns {
-		strings[name] = dataResourceRow(name, transformedColumn, dataStatuses)
-	}
-	return dataResourcesHeader() + strMapToStr(strings)
-}
-
-func trainingDataStr(dataStatuses map[string]*resource.DataStatus, ctx *context.Context) string {
-	if len(ctx.Models) == 0 {
-		return "None\n"
-	}
-
-	strings := make(map[string]string)
-	for _, model := range ctx.Models {
-		name := model.Dataset.Name
-		strings[name] = dataResourceRow(name, model.Dataset, dataStatuses)
-	}
-	return dataResourcesHeader() + strMapToStr(strings)
-}
-
-func modelsStr(dataStatuses map[string]*resource.DataStatus, ctx *context.Context) string {
-	if len(ctx.Models) == 0 {
-		return "None\n"
-	}
-
-	strings := make(map[string]string)
-	for name, model := range ctx.Models {
-		strings[name] = dataResourceRow(name, model, dataStatuses)
-	}
-	return dataResourcesHeader() + strMapToStr(strings)
+	return appName + " " + strings.Join(args, ", "), nil
 }
 
 func apisStr(apiGroupStatuses map[string]*resource.APIGroupStatus) string {
@@ -289,89 +71,6 @@ func apisStr(apiGroupStatuses map[string]*resource.APIGroupStatus) string {
 		strings[name] = apiResourceRow(apiGroupStatus)
 	}
 	return apisHeader() + strMapToStr(strings)
-}
-
-func describePythonPackage(name string, resourcesRes *schema.GetResourcesResponse) (string, error) {
-	pythonPackage := resourcesRes.Context.PythonPackages[name]
-	if pythonPackage == nil {
-		return "", userconfig.ErrorUndefinedResource(name, resource.PythonPackageType)
-	}
-	dataStatus := resourcesRes.DataStatuses[pythonPackage.GetID()]
-	return dataStatusSummary(dataStatus), nil
-}
-
-func describeRawColumn(name string, resourcesRes *schema.GetResourcesResponse) (string, error) {
-	rawColumn := resourcesRes.Context.RawColumns[name]
-	if rawColumn == nil {
-		return "", userconfig.ErrorUndefinedResource(name, resource.RawColumnType)
-	}
-	dataStatus := resourcesRes.DataStatuses[rawColumn.GetID()]
-	out := dataStatusSummary(dataStatus)
-	out += resourceStr(context.GetRawColumnUserConfig(rawColumn))
-	return out, nil
-}
-
-func describeAggregate(name string, resourcesRes *schema.GetResourcesResponse) (string, error) {
-	aggregate := resourcesRes.Context.Aggregates[name]
-	if aggregate == nil {
-		return "", userconfig.ErrorUndefinedResource(name, resource.AggregateType)
-	}
-	dataStatus := resourcesRes.DataStatuses[aggregate.ID]
-	out := dataStatusSummary(dataStatus)
-
-	if dataStatus.ExitCode == resource.ExitCodeDataSucceeded {
-		params := map[string]string{"appName": resourcesRes.Context.App.Name}
-		httpResponse, err := HTTPGet("/aggregate/"+aggregate.ID, params)
-		if err != nil {
-			return "", err
-		}
-
-		var aggregateRes schema.GetAggregateResponse
-		err = json.Unmarshal(httpResponse, &aggregateRes)
-		if err != nil {
-			return "", errors.Wrap(err, "/aggregate", "response", string(httpResponse))
-		}
-
-		obj, err := msgpack.UnmarshalToInterface(aggregateRes.Value)
-		if err != nil {
-			return "", errors.Wrap(err, "/aggregate", "response", msgpack.ErrorUnmarshalMsgpack().Error())
-		}
-		out += valueStr(obj)
-	}
-
-	out += resourceStr(aggregate.Aggregate)
-	return out, nil
-}
-
-func describeTransformedColumn(name string, resourcesRes *schema.GetResourcesResponse) (string, error) {
-	transformedColumn := resourcesRes.Context.TransformedColumns[name]
-	if transformedColumn == nil {
-		return "", userconfig.ErrorUndefinedResource(name, resource.TransformedColumnType)
-	}
-	dataStatus := resourcesRes.DataStatuses[transformedColumn.ID]
-	out := dataStatusSummary(dataStatus)
-	out += resourceStr(transformedColumn.TransformedColumn)
-	return out, nil
-}
-
-func describeTrainingDataset(name string, resourcesRes *schema.GetResourcesResponse) (string, error) {
-	trainingDataset := resourcesRes.Context.Models.GetTrainingDatasets()[name]
-	if trainingDataset == nil {
-		return "", userconfig.ErrorUndefinedResource(name, resource.TrainingDatasetType)
-	}
-	dataStatus := resourcesRes.DataStatuses[trainingDataset.ID]
-	return dataStatusSummary(dataStatus), nil
-}
-
-func describeModel(name string, resourcesRes *schema.GetResourcesResponse) (string, error) {
-	model := resourcesRes.Context.Models[name]
-	if model == nil {
-		return "", userconfig.ErrorUndefinedResource(name, resource.ModelType)
-	}
-	dataStatus := resourcesRes.DataStatuses[model.ID]
-	out := dataStatusSummary(dataStatus)
-	out += resourceStr(model.Model)
-	return out, nil
 }
 
 func describeAPI(name string, resourcesRes *schema.GetResourcesResponse) (string, error) {
@@ -441,20 +140,8 @@ func describeAPI(name string, resourcesRes *schema.GetResourcesResponse) (string
 	return out, nil
 }
 
-func dataStatusSummary(dataStatus *resource.DataStatus) string {
-	out := titleStr("Summary")
-	out += "Status:               " + dataStatus.Message() + "\n"
-	out += "Workload started at:  " + libtime.LocalTimestamp(dataStatus.Start) + "\n"
-	out += "Workload ended at:    " + libtime.LocalTimestamp(dataStatus.End) + "\n"
-	return out
-}
-
 func resourceStr(resource userconfig.Resource) string {
 	return titleStr("Configuration") + s.Obj(resource) + "\n"
-}
-
-func valueStr(value interface{}) string {
-	return titleStr("Value") + s.Obj(value) + "\n"
 }
 
 func strMapToStr(strings map[string]string) string {

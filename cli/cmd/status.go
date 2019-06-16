@@ -23,7 +23,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/cortexlabs/cortex/pkg/operator/api/context"
 	"github.com/cortexlabs/cortex/pkg/operator/api/resource"
 	"github.com/cortexlabs/cortex/pkg/operator/api/schema"
 )
@@ -32,11 +31,10 @@ func init() {
 	addAppNameFlag(statusCmd)
 	addEnvFlag(statusCmd)
 	addWatchFlag(statusCmd)
-	addResourceTypesToHelp(statusCmd)
 }
 
 var statusCmd = &cobra.Command{
-	Use:   "status [RESOURCE_TYPE] [RESOURCE_NAME]",
+	Use:   "status",
 	Short: "get resource statuses",
 	Long:  "Get resource statuses.",
 	Args:  cobra.RangeArgs(0, 2),
@@ -48,119 +46,13 @@ var statusCmd = &cobra.Command{
 }
 
 func runStatus(cmd *cobra.Command, args []string) (string, error) {
-	resourceName, resourceTypeStr := "", ""
-	switch len(args) {
-	case 0:
-		resourcesRes, err := getResourcesResponse()
-		if err != nil {
-			return "", err
-		}
-		return resourceStatusesStr(resourcesRes), nil
-	case 1:
-		resourceName = args[0]
-	case 2:
-		userResourceType := args[0]
-		resourceName = args[1]
-
-		if userResourceType != "" {
-			resourceType, err := resource.VisibleResourceTypeFromPrefix(userResourceType)
-			if err != nil {
-				return "", err
-			}
-
-			resourceTypeStr = resourceType.String()
-		}
-	}
-
-	appName, err := AppNameFromFlagOrConfig()
-	if err != nil {
-		return "", err
-	}
-
-	err = StreamLogs(appName, resourceName, resourceTypeStr, false)
-	if err != nil {
-		return "", err
-	}
-
-	return "", nil
+	return strings.Join(args, ","), nil
 }
 
 func resourceStatusesStr(resourcesRes *schema.GetResourcesResponse) string {
-	out := "\n"
-	out += pythonPackageStatusesStr(resourcesRes.DataStatuses, resourcesRes.Context) + "\n"
-	out += rawColumnStatusesStr(resourcesRes.DataStatuses, resourcesRes.Context) + "\n"
-	out += aggregateStatusesStr(resourcesRes.DataStatuses, resourcesRes.Context) + "\n"
-	out += transformedColumnStatusesStr(resourcesRes.DataStatuses, resourcesRes.Context) + "\n"
-	out += trainingDatasetStatusesStr(resourcesRes.DataStatuses, resourcesRes.Context) + "\n"
-	out += modelStatusesStr(resourcesRes.DataStatuses, resourcesRes.Context) + "\n"
-	out += apiStatusesStr(resourcesRes.APIGroupStatuses)
-	return out
-}
-
-func pythonPackageStatusesStr(dataStatuses map[string]*resource.DataStatus, ctx *context.Context) string {
-	var statuses = make([]resource.Status, len(ctx.PythonPackages))
+	var statuses = make([]resource.Status, len(resourcesRes.APIGroupStatuses))
 	i := 0
-	for _, pythonPackage := range ctx.PythonPackages {
-		statuses[i] = dataStatuses[pythonPackage.GetID()]
-		i++
-	}
-	return "Python Packages:       " + StatusStr(statuses)
-}
-
-func rawColumnStatusesStr(dataStatuses map[string]*resource.DataStatus, ctx *context.Context) string {
-	var statuses = make([]resource.Status, len(ctx.RawColumns))
-	i := 0
-	for _, rawColumn := range ctx.RawColumns {
-		statuses[i] = dataStatuses[rawColumn.GetID()]
-		i++
-	}
-	return "Raw Columns:           " + StatusStr(statuses)
-}
-
-func aggregateStatusesStr(dataStatuses map[string]*resource.DataStatus, ctx *context.Context) string {
-	var statuses = make([]resource.Status, len(ctx.Aggregates))
-	i := 0
-	for _, aggregate := range ctx.Aggregates {
-		statuses[i] = dataStatuses[aggregate.GetID()]
-		i++
-	}
-	return "Aggregates:            " + StatusStr(statuses)
-}
-
-func transformedColumnStatusesStr(dataStatuses map[string]*resource.DataStatus, ctx *context.Context) string {
-	var statuses = make([]resource.Status, len(ctx.TransformedColumns))
-	i := 0
-	for _, transformedColumn := range ctx.TransformedColumns {
-		statuses[i] = dataStatuses[transformedColumn.GetID()]
-		i++
-	}
-	return "Transformed Columns:   " + StatusStr(statuses)
-}
-
-func trainingDatasetStatusesStr(dataStatuses map[string]*resource.DataStatus, ctx *context.Context) string {
-	var statuses = make([]resource.Status, len(ctx.Models))
-	i := 0
-	for _, model := range ctx.Models {
-		statuses[i] = dataStatuses[model.Dataset.GetID()]
-		i++
-	}
-	return "Training Datasets:     " + StatusStr(statuses)
-}
-
-func modelStatusesStr(dataStatuses map[string]*resource.DataStatus, ctx *context.Context) string {
-	var statuses = make([]resource.Status, len(ctx.Models))
-	i := 0
-	for _, model := range ctx.Models {
-		statuses[i] = dataStatuses[model.GetID()]
-		i++
-	}
-	return "Models:                " + StatusStr(statuses)
-}
-
-func apiStatusesStr(apiGroupStatuses map[string]*resource.APIGroupStatus) string {
-	var statuses = make([]resource.Status, len(apiGroupStatuses))
-	i := 0
-	for _, apiGroupStatus := range apiGroupStatuses {
+	for _, apiGroupStatus := range resourcesRes.APIGroupStatuses {
 		statuses[i] = apiGroupStatus
 		i++
 	}

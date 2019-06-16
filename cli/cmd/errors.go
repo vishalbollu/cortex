@@ -92,7 +92,7 @@ func (e Error) Error() string {
 	return e.message
 }
 
-func ErrorCliAlreadyInAppDir(dirPath string) error {
+func ErrorCLIAlreadyInAppDir(dirPath string) error {
 	return Error{
 		Kind:    ErrCliAlreadyInAppDir,
 		message: fmt.Sprintf("your current working directory is already in a cortex app directory (%s)", dirPath),
@@ -110,13 +110,6 @@ func ErrorAPINotFound(apiName string) error {
 	return Error{
 		Kind:    ErrAPINotFound,
 		message: fmt.Sprintf("api %s not found", s.UserStr(apiName)),
-	}
-}
-
-func ErrorFailedToConnect(urlStr string) error {
-	return Error{
-		Kind:    ErrFailedToConnect,
-		message: fmt.Sprintf("failed to connect to the operator (%s), run `cortex configure` if you need to update the operator URL", urlStr),
 	}
 }
 

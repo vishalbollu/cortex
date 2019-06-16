@@ -21,30 +21,28 @@ import (
 	"github.com/cortexlabs/cortex/pkg/lib/sets/strset"
 	"github.com/cortexlabs/cortex/pkg/operator/api/resource"
 	userconfig "github.com/cortexlabs/cortex/pkg/operator/api/userconfig"
-	"github.com/cortexlabs/cortex/pkg/operator/config"
 )
 
 type Context struct {
-	ID                 string               `json:"id"`
-	Key                string               `json:"key"`
-	CortexConfig       *config.CortexConfig `json:"cortex_config"`
-	DatasetVersion     string               `json:"dataset_version"`
-	Root               string               `json:"root"`
-	MetadataRoot       string               `json:"metadata_root"`
-	RawDataset         RawDataset           `json:"raw_dataset"`
-	StatusPrefix       string               `json:"status_prefix"`
-	App                *App                 `json:"app"`
-	Environment        *Environment         `json:"environment"`
-	PythonPackages     PythonPackages       `json:"python_packages"`
-	RawColumns         RawColumns           `json:"-"`
-	Aggregates         Aggregates           `json:"aggregates"`
-	TransformedColumns TransformedColumns   `json:"transformed_columns"`
-	Models             Models               `json:"models"`
-	APIs               APIs                 `json:"apis"`
-	Constants          Constants            `json:"constants"`
-	Aggregators        Aggregators          `json:"aggregators"`
-	Transformers       Transformers         `json:"transformers"`
-	Estimators         Estimators           `json:"estimators"`
+	ID                 string             `json:"id"`
+	Key                string             `json:"key"`
+	DatasetVersion     string             `json:"dataset_version"`
+	Root               string             `json:"root"`
+	MetadataRoot       string             `json:"metadata_root"`
+	RawDataset         RawDataset         `json:"raw_dataset"`
+	StatusPrefix       string             `json:"status_prefix"`
+	App                *App               `json:"app"`
+	Environment        *Environment       `json:"environment"`
+	PythonPackages     PythonPackages     `json:"python_packages"`
+	RawColumns         RawColumns         `json:"-"`
+	Aggregates         Aggregates         `json:"aggregates"`
+	TransformedColumns TransformedColumns `json:"transformed_columns"`
+	Models             Models             `json:"models"`
+	APIs               APIs               `json:"apis"`
+	Constants          Constants          `json:"constants"`
+	Aggregators        Aggregators        `json:"aggregators"`
+	Transformers       Transformers       `json:"transformers"`
+	Estimators         Estimators         `json:"estimators"`
 }
 
 type RawDataset struct {

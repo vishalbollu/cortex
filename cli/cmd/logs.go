@@ -17,50 +17,22 @@ limitations under the License.
 package cmd
 
 import (
-	"github.com/spf13/cobra"
+	"fmt"
 
-	"github.com/cortexlabs/cortex/pkg/lib/errors"
-	"github.com/cortexlabs/cortex/pkg/operator/api/resource"
+	"github.com/spf13/cobra"
 )
 
 func init() {
 	addAppNameFlag(logsCmd)
 	addEnvFlag(logsCmd)
-	addResourceTypesToHelp(logsCmd)
 }
 
 var logsCmd = &cobra.Command{
-	Use:   "logs [RESOURCE_TYPE] RESOURCE_NAME",
+	Use:   "logs RESOURCE_NAME",
 	Short: "get logs for a resource",
 	Long:  "Get logs for a resource.",
 	Args:  cobra.RangeArgs(1, 2),
 	Run: func(cmd *cobra.Command, args []string) {
-		resourceName, resourceTypeStr := "", ""
-		switch len(args) {
-		case 1:
-			resourceName = args[0]
-		case 2:
-			userResourceType := args[0]
-			resourceName = args[1]
-
-			if userResourceType != "" {
-				resourceType, err := resource.VisibleResourceTypeFromPrefix(userResourceType)
-				if err != nil {
-					errors.Exit(err)
-				}
-
-				resourceTypeStr = resourceType.String()
-			}
-		}
-
-		appName, err := AppNameFromFlagOrConfig()
-		if err != nil {
-			errors.Exit(err)
-		}
-
-		err = StreamLogs(appName, resourceName, resourceTypeStr, true)
-		if err != nil {
-			errors.Exit(err)
-		}
+		fmt.Println(args)
 	},
 }

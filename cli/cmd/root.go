@@ -30,7 +30,6 @@ import (
 	"github.com/cortexlabs/cortex/pkg/lib/slices"
 	s "github.com/cortexlabs/cortex/pkg/lib/strings"
 	libtime "github.com/cortexlabs/cortex/pkg/lib/time"
-	"github.com/cortexlabs/cortex/pkg/operator/api/resource"
 )
 
 var cmdStr string
@@ -39,7 +38,7 @@ var flagEnv string
 var flagWatch bool
 var flagAppName string
 
-var configFileExts = []string{"json", "yaml", "yml"}
+var configFileExts = []string{"yaml", "yml"}
 
 func init() {
 	cobra.EnablePrefixMatching = true
@@ -82,11 +81,6 @@ func Execute() {
 	rootCmd.Execute()
 }
 
-func setConfigFlag(flagStr string, description string, flag *string, cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVarP(flag, flagStr+"-config", "", "", description)
-	cmd.PersistentFlags().SetAnnotation(flagStr+"-config", cobra.BashCompFilenameExt, configFileExts)
-}
-
 func addEnvFlag(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVarP(&flagEnv, "env", "e", "dev", "environment")
 }
@@ -97,14 +91,6 @@ func addWatchFlag(cmd *cobra.Command) {
 
 func addAppNameFlag(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVarP(&flagAppName, "app", "a", "", "app name")
-}
-
-var resourceTypesHelp = fmt.Sprintf("\nResource Types:\n  %s\n", strings.Join(resource.VisibleTypes.StringList(), "\n  "))
-
-func addResourceTypesToHelp(cmd *cobra.Command) {
-	usage := cmd.UsageTemplate()
-	usage = strings.Replace(usage, "\nFlags:\n", resourceTypesHelp+"\nFlags:\n", 1)
-	cmd.SetUsageTemplate(usage)
 }
 
 func getTerminalWidth() int {

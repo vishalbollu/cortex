@@ -22,17 +22,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cortexlabs/cortex/pkg/lib/errors"
-	"github.com/cortexlabs/cortex/pkg/lib/json"
-	s "github.com/cortexlabs/cortex/pkg/lib/strings"
-	"github.com/cortexlabs/cortex/pkg/operator/api/schema"
 )
-
-var flagKeepCache bool
-
-func init() {
-	deleteCmd.PersistentFlags().BoolVarP(&flagKeepCache, "keep-cache", "c", false, "keep cached data for the app")
-	addEnvFlag(deleteCmd)
-}
 
 var deleteCmd = &cobra.Command{
 	Use:   "delete [APP_NAME]",
@@ -51,20 +41,6 @@ var deleteCmd = &cobra.Command{
 			}
 		}
 
-		params := map[string]string{
-			"appName":   appName,
-			"keepCache": s.Bool(flagKeepCache),
-		}
-		httpResponse, err := HTTPPostJSONData("/delete", nil, params)
-		if err != nil {
-			errors.Exit(err)
-		}
-
-		var deleteResponse schema.DeleteResponse
-		err = json.Unmarshal(httpResponse, &deleteResponse)
-		if err != nil {
-			errors.Exit(err, "/delete", "response", string(httpResponse))
-		}
-		fmt.Println(deleteResponse.Message)
+		fmt.Println(appName)
 	},
 }

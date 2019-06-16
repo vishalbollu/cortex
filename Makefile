@@ -18,56 +18,6 @@ SHELL := /bin/bash
 # Dev #
 #######
 
-# Operator
-
-devstart:
-	@./dev/operator_local.sh || true
-
-oinstall:
-	@./cortex-installer.sh -c=./dev/config/cortex.sh install operator
-
-oupdate:
-	@./cortex-installer.sh -c=./dev/config/cortex.sh update operator
-
-ouninstall:
-	@./cortex-installer.sh -c=./dev/config/cortex.sh uninstall operator
-
-ostop:
-	@kubectl -n=cortex delete --ignore-not-found=true deployment operator
-
-# EKS
-
-eks-up:
-	@./dev/eks.sh start
-	$(MAKE) oinstall
-
-eks-up-dev:
-	$(MAKE) eks-up
-	$(MAKE) ostop
-
-eks-down:
-	$(MAKE) ouninstall || true
-	@./dev/eks.sh stop
-
-eks-set:
-	@./dev/eks.sh set
-
-# KOPS
-
-kops-up:
-	@./dev/kops.sh start
-	$(MAKE) oinstall
-
-kops-up-dev:
-	$(MAKE) kops-up
-	$(MAKE) ostop
-
-kops-down:
-	@./dev/kops.sh stop
-
-kops-set:
-	@./dev/kops.sh set
-
 # Docker images
 
 registry-all:
@@ -86,16 +36,16 @@ cli:
 	@mkdir -p ./bin
 	@GOARCH=amd64 CGO_ENABLED=0 go build -o ./bin/cortex ./cli
 
-aws-clear-bucket:
-	@./dev/aws.sh clear-bucket
+cli-watch:
+	@rerun -watch ./pkg ./cli -ignore ./vendor ./bin -run sh -c "go build -installsuffix cgo -o ./bin/cortex ./cli && echo 'built'"
+
+format:
+	@./dev/format.sh
 
 tools:
 	@GO111MODULE=off go get -u -v golang.org/x/lint/golint
 	@go get -u -v github.com/VojtechVitek/rerun/cmd/rerun
 	@pip3 install black
-
-format:
-	@./dev/format.sh
 
 #########
 # Tests #
@@ -125,39 +75,12 @@ test-examples:
 ###############
 
 ci-build-images:
-	@./build/build-image.sh images/spark-base spark-base
-	@./build/build-image.sh images/tf-base tf-base
-	@./build/build-image.sh images/tf-base-gpu tf-base-gpu
-	@./build/build-image.sh images/spark spark
-	@./build/build-image.sh images/spark-operator spark-operator
-	@./build/build-image.sh images/tf-train tf-train
-	@./build/build-image.sh images/tf-train-gpu tf-train-gpu
-	@./build/build-image.sh images/tf-serve tf-serve
-	@./build/build-image.sh images/tf-serve-gpu tf-serve-gpu
-	@./build/build-image.sh images/tf-api tf-api
-	@./build/build-image.sh images/operator operator
-	@./build/build-image.sh images/fluentd fluentd
-	@./build/build-image.sh images/nginx-controller nginx-controller
-	@./build/build-image.sh images/nginx-backend nginx-backend
-	@./build/build-image.sh images/argo-controller argo-controller
-	@./build/build-image.sh images/argo-executor argo-executor
-	@./build/build-image.sh images/python-packager python-packager
+	@./build/build-image.sh images/serving-tf serving-tf
+	@./build/build-image.sh images/serving-tf-gpu serving-tf-gpu
 
 ci-push-images:
-	@./build/push-image.sh spark
-	@./build/push-image.sh spark-operator
-	@./build/push-image.sh tf-train
-	@./build/push-image.sh tf-train-gpu
-	@./build/push-image.sh tf-serve
-	@./build/push-image.sh tf-serve-gpu
-	@./build/push-image.sh tf-api
-	@./build/push-image.sh operator
-	@./build/push-image.sh fluentd
-	@./build/push-image.sh nginx-controller
-	@./build/push-image.sh nginx-backend
-	@./build/push-image.sh argo-controller
-	@./build/push-image.sh argo-executor
-	@./build/push-image.sh python-packager
+	@./build/push-image.sh serving-tf
+	@./build/push-image.sh serving-tf-gpu
 
 ci-build-cli:
 	@./build/cli.sh
