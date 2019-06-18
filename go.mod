@@ -16,6 +16,10 @@ require (
 	github.com/aws/aws-sdk-go v1.20.1
 	github.com/cortexlabs/yaml v0.0.0-20190530233410-11baebde6c89
 	github.com/davecgh/go-spew v1.1.1
+	github.com/docker/distribution v2.7.1+incompatible // indirect
+	github.com/docker/docker v1.13.1
+	github.com/docker/go-connections v0.4.0
+	github.com/docker/go-units v0.4.0 // indirect
 	github.com/gogo/protobuf v1.2.1 // indirect
 	github.com/google/gofuzz v1.0.0 // indirect
 	github.com/googleapis/gnostic v0.3.0 // indirect
@@ -25,6 +29,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.3.0

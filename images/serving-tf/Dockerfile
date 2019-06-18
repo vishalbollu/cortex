@@ -1,1 +1,22 @@
-# TODO
+FROM cortexlabs/serving-base
+
+ARG TF_SERV_VERSION="1.13.0"
+
+RUN apt-get update -qq && apt-get install -y -q \
+        curl \
+    && apt-get clean -qq && rm -rf /var/lib/apt/lists/*
+
+RUN curl -o tensorflow-model-server.deb http://storage.googleapis.com/tensorflow-serving-apt/pool/tensorflow-model-server-${TF_SERV_VERSION}/t/tensorflow-model-server/tensorflow-model-server_${TF_SERV_VERSION}_all.deb
+RUN dpkg -i tensorflow-model-server.deb
+
+ENV MODEL_BASE_PATH="/mnt/model"
+ENV API_PORT=8888
+ENV TF_SERVING_PORT=9000
+ENV EXTERNAL_MODEL_PATH="/mnt/model"
+
+RUN mkdir -p $MODEL_BASE_PATH
+
+
+COPY images/serving-tf/run.sh /src/run.sh
+RUN chmod +x /src/run.sh
+ENTRYPOINT ["/src/run.sh"]

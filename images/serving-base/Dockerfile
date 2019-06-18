@@ -23,21 +23,14 @@ RUN apt-get update -qq && apt-get install -y -q \
         zlib1g-dev \
     && apt-get clean -qq && rm -rf /var/lib/apt/lists/*
 
+ENV PYTHONPATH="/src:${PYTHONPATH}"
 
+COPY pkg/workloads/lib/requirements.txt /src/lib/requirements.txt
+COPY pkg/workloads/tf_api/requirements.txt /src/tf_api/requirements.txt
+RUN pip3 install -r /src/lib/requirements.txt && \
+    pip3 install -r /src/tf_api/requirements.txt && \
+    rm -rf /root/.cache/pip*
 
-
-FROM cortexlabs/spark
-
-RUN pip3 install pytest mock
-
-COPY pkg/workloads /src
-COPY pkg/aggregators /aggregators
-COPY pkg/transformers /transformers
-COPY pkg/estimators /estimators
-
-COPY images/test/run.sh /src/run.sh
-
-WORKDIR /src
-
-ENTRYPOINT ["/bin/bash"]
-CMD ["/src/run.sh"]
+COPY pkg/workloads/consts.py /src/
+COPY pkg/workloads/lib /src/lib
+COPY pkg/workloads/tf_api /src/tf_api

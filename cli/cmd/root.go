@@ -67,6 +67,9 @@ func Execute() {
 
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(deployCmd)
+	rootCmd.AddCommand(serveCmd)
+	rootCmd.AddCommand(localCmd)
+
 	rootCmd.AddCommand(refreshCmd)
 	rootCmd.AddCommand(predictCmd)
 	rootCmd.AddCommand(deleteCmd)

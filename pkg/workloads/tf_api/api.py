@@ -27,12 +27,12 @@ from tensorflow_serving.apis import predict_pb2
 from tensorflow_serving.apis import get_model_metadata_pb2
 from tensorflow_serving.apis import prediction_service_pb2_grpc
 from google.protobuf import json_format
+from lib.storage import S3
 
 import consts
-from lib import util, tf_lib, package, Context
+from lib import util
 from lib.log import get_logger
 from lib.exceptions import CortexException, UserRuntimeException, UserException
-from lib.context import create_transformer_inputs_from_map
 
 logger = get_logger()
 logger.propagate = False  # prevent double logging (flask modifies root logger)
@@ -40,13 +40,9 @@ logger.propagate = False  # prevent double logging (flask modifies root logger)
 app = Flask(__name__)
 
 local_cache = {
-    "ctx": None,
-    "model": None,
-    "estimator": None,
     "target_col": None,
     "target_col_type": None,
     "stub": None,
-    "api": None,
     "trans_impls": {},
     "required_inputs": None,
     "metadata": None,
@@ -73,55 +69,6 @@ DTYPE_TO_TF_TYPE = {
 }
 
 
-def transform_sample(sample):
-    ctx = local_cache["ctx"]
-    model = local_cache["model"]
-
-    transformed_sample = {}
-
-    for column_name in ctx.extract_column_names(model["input"]):
-        if ctx.is_raw_column(column_name):
-            transformed_value = sample[column_name]
-        else:
-            transformed_column = ctx.transformed_columns[column_name]
-            trans_impl = local_cache["trans_impls"][column_name]
-            if not hasattr(trans_impl, "transform_python"):
-                raise UserException(
-                    "transformed column " + column_name,
-                    "transformer " + transformed_column["transformer"],
-                    "transform_python function is missing",
-                )
-            input = ctx.populate_values(
-                transformed_column["input"], None, preserve_column_refs=True
-            )
-            transformer_input = create_transformer_inputs_from_map(input, sample)
-            transformed_value = trans_impl.transform_python(transformer_input)
-
-        transformed_sample[column_name] = transformed_value
-
-    return transformed_sample
-
-
-def create_prediction_request(transformed_sample):
-    ctx = local_cache["ctx"]
-    signature_def = local_cache["metadata"]["signatureDef"]
-    signature_key = list(signature_def.keys())[0]
-    prediction_request = predict_pb2.PredictRequest()
-    prediction_request.model_spec.name = "default"
-    prediction_request.model_spec.signature_name = signature_key
-
-    for column_name, value in transformed_sample.items():
-        column_type = ctx.get_inferred_column_type(column_name)
-        data_type = tf_lib.CORTEX_TYPE_TO_TF_TYPE[column_type]
-        shape = [1]
-        if util.is_list(value):
-            shape = [len(value)]
-        tensor_proto = tf.make_tensor_proto([value], dtype=data_type, shape=shape)
-        prediction_request.inputs[column_name].CopyFrom(tensor_proto)
-
-    return prediction_request
-
-
 def create_raw_prediction_request(sample):
     signature_def = local_cache["metadata"]["signatureDef"]
     signature_key = list(signature_def.keys())[0]
@@ -138,79 +85,6 @@ def create_raw_prediction_request(sample):
         prediction_request.inputs[column_name].CopyFrom(tensor_proto)
 
     return prediction_request
-
-
-def reverse_transform(value):
-    ctx = local_cache["ctx"]
-    model = local_cache["model"]
-    target_col = local_cache["target_col"]
-
-    trans_impl = local_cache["trans_impls"].get(target_col["name"])
-    if not (trans_impl and hasattr(trans_impl, "reverse_transform_python")):
-        return None
-
-    input = ctx.populate_values(target_col["input"], None, preserve_column_refs=False)
-    try:
-        result = trans_impl.reverse_transform_python(value, input)
-    except Exception as e:
-        raise UserRuntimeException(
-            "transformer " + target_col["transformer"], "function reverse_transform_python"
-        ) from e
-
-    return result
-
-
-def parse_response_proto(response_proto):
-    """
-    response_proto is type tensorflow_serving.apis.predict_pb2.PredictResponse
-
-    https://developers.google.com/protocol-buffers/docs/reference/python-generated
-    https://github.com/tensorflow/serving/blob/master/tensorflow_serving/apis/predict.proto
-    Also see GRPC docs
-    response_proto.result() may be necessary (TF > 1.2?)
-    """
-    model = local_cache["model"]
-    estimator = local_cache["estimator"]
-    target_col_type = local_cache["target_col_type"]
-
-    if target_col_type in {consts.COLUMN_TYPE_STRING, consts.COLUMN_TYPE_INT}:
-        prediction_key = "class_ids"
-    else:
-        prediction_key = "predictions"
-
-    if estimator["prediction_key"]:
-        prediction_key = estimator["prediction_key"]
-
-    results_dict = json_format.MessageToDict(response_proto)
-    outputs = results_dict["outputs"]
-    value_key = DTYPE_TO_VALUE_KEY[outputs[prediction_key]["dtype"]]
-    prediction = outputs[prediction_key][value_key][0]
-
-    target_vocab_estimators = {
-        "dnn_classifier",
-        "linear_classifier",
-        "dnn_linear_combined_classifier",
-        "boosted_trees_classifier",
-    }
-    if (
-        estimator["namespace"] == "cortex"
-        and estimator["name"] in target_vocab_estimators
-        and model["input"].get("target_vocab") is not None
-    ):
-        prediction = model["input"]["target_vocab"][int(prediction)]
-    else:
-        prediction = util.cast(prediction, target_col_type)
-
-    result = {}
-    result["prediction"] = prediction
-    result["prediction_reversed"] = reverse_transform(prediction)
-
-    result["response"] = {}
-    for key in outputs.keys():
-        value_key = DTYPE_TO_VALUE_KEY[outputs[key]["dtype"]]
-        result["response"][key] = outputs[key][value_key]
-
-    return result
 
 
 def create_get_model_metadata_request():
@@ -243,48 +117,14 @@ def parse_response_proto_raw(response_proto):
 
 
 def run_predict(sample):
-    if local_cache["ctx"].environment is not None:
-        transformed_sample = transform_sample(sample)
-        prediction_request = create_prediction_request(transformed_sample)
-        response_proto = local_cache["stub"].Predict(prediction_request, timeout=10.0)
-        result = parse_response_proto(response_proto)
-
-        util.log_indent("Raw sample:", indent=4)
-        util.log_pretty(sample, indent=6)
-        util.log_indent("Transformed sample:", indent=4)
-        util.log_pretty(transformed_sample, indent=6)
-        util.log_indent("Prediction:", indent=4)
-        util.log_pretty(result, indent=6)
-
-        result["transformed_sample"] = transformed_sample
-
-    else:
-        prediction_request = create_raw_prediction_request(sample)
-        response_proto = local_cache["stub"].Predict(prediction_request, timeout=10.0)
-        result = parse_response_proto_raw(response_proto)
-        util.log_indent("Sample:", indent=4)
-        util.log_pretty(sample, indent=6)
-        util.log_indent("Prediction:", indent=4)
-        util.log_pretty(result, indent=6)
-
+    prediction_request = create_raw_prediction_request(sample)
+    response_proto = local_cache["stub"].Predict(prediction_request, timeout=10.0)
+    result = parse_response_proto_raw(response_proto)
+    util.log_indent("Sample:", indent=4)
+    util.log_pretty(sample, indent=6)
+    util.log_indent("Prediction:", indent=4)
+    util.log_pretty(result, indent=6)
     return result
-
-
-def is_valid_sample(sample):
-    ctx = local_cache["ctx"]
-
-    for column in local_cache["required_inputs"]:
-        if column["name"] not in sample:
-            return False, "{} is missing".format(column["name"])
-
-        sample_val = sample[column["name"]]
-        column_type = ctx.get_inferred_column_type(column["name"])
-        is_valid = util.CORTEX_TYPE_TO_VALIDATOR[column_type](sample_val)
-
-        if not is_valid:
-            return (False, "{} should be a {}".format(column["name"], column_type))
-
-    return True, None
 
 
 def prediction_failed(sample, reason=None):
@@ -301,15 +141,12 @@ def health():
     return jsonify({"ok": True})
 
 
-@app.route("/<app_name>/<api_name>", methods=["POST"])
-def predict(app_name, api_name):
+@app.route("/", methods=["POST"])
+def predict():
     try:
         payload = request.get_json()
     except Exception as e:
         return "Malformed JSON", status.HTTP_400_BAD_REQUEST
-
-    ctx = local_cache["ctx"]
-    api = local_cache["api"]
 
     response = {}
 
@@ -329,119 +166,68 @@ def predict(app_name, api_name):
 
     for i, sample in enumerate(payload["samples"]):
         util.log_indent("sample {}".format(i + 1), 2)
-
-        if local_cache["ctx"].environment is not None:
-            is_valid, reason = is_valid_sample(sample)
-            if not is_valid:
-                return prediction_failed(sample, reason)
-
-            for column in local_cache["required_inputs"]:
-                column_type = ctx.get_inferred_column_type(column["name"])
-                sample[column["name"]] = util.upcast(sample[column["name"]], column_type)
-
         try:
             result = run_predict(sample)
         except CortexException as e:
             e.wrap("error", "sample {}".format(i + 1))
             logger.error(str(e))
-            logger.exception(
-                "An error occurred, see `cx logs api {}` for more details.".format(api["name"])
-            )
+            logger.exception("An error occurred, see `cx logs api {}` for more details.".format(1))
             return prediction_failed(sample, str(e))
         except Exception as e:
-            logger.exception(
-                "An error occurred, see `cx logs api {}` for more details.".format(api["name"])
-            )
+            logger.exception("An error occurred, see `cx logs api {}` for more details.".format(2))
             return prediction_failed(sample, str(e))
 
         predictions.append(result)
 
     response["predictions"] = predictions
-    response["resource_id"] = api["id"]
 
     return jsonify(response)
 
 
 def start(args):
-    ctx = Context(s3_path=args.context, cache_dir=args.cache_dir, workload_id=args.workload_id)
-    package.install_packages(ctx.python_packages, ctx.storage)
-
-    api = ctx.apis_id_map[args.api]
-
-    local_cache["api"] = api
-    local_cache["ctx"] = ctx
-
-    if ctx.environment is not None:
-        model = ctx.models[api["model_name"]]
-        estimator = ctx.estimators[model["estimator"]]
-
-        local_cache["model"] = model
-        local_cache["estimator"] = estimator
-        local_cache["target_col"] = ctx.columns[util.get_resource_ref(model["target_column"])]
-        local_cache["target_col_type"] = ctx.get_inferred_column_type(
-            util.get_resource_ref(model["target_column"])
-        )
-
-        tf_lib.set_logging_verbosity(ctx.environment["log_level"]["tensorflow"])
-
-        if not os.path.isdir(args.model_dir):
-            ctx.storage.download_and_unzip(model["key"], args.model_dir)
-
-        for column_name in ctx.extract_column_names([model["input"], model["target_column"]]):
-            if ctx.is_transformed_column(column_name):
-                trans_impl, _ = ctx.get_transformer_impl(column_name)
-                local_cache["trans_impls"][column_name] = trans_impl
-                transformed_column = ctx.transformed_columns[column_name]
-
-                # cache aggregate values
-                for resource_name in util.extract_resource_refs(transformed_column["input"]):
-                    if resource_name in ctx.aggregates:
-                        ctx.get_obj(ctx.aggregates[resource_name]["key"])
-
-        local_cache["required_inputs"] = tf_lib.get_base_input_columns(model["name"], ctx)
-
+    if args.mode == "init":
+        logger.info(args)
+        logger.info(os.environ)
+        S3.download_and_unzip_external(args.model_path, args.model_dir)
     else:
-        if not os.path.isdir(args.model_dir):
-            ctx.storage.download_and_unzip_external(api["external_model"]["path"], args.model_dir)
+        # if not os.path.isdir(args.model_dir):
+        S3.download_and_unzip_external(args.model_path, args.model_dir)
 
-    channel = grpc.insecure_channel("localhost:" + str(args.tf_serve_port))
-    local_cache["stub"] = prediction_service_pb2_grpc.PredictionServiceStub(channel)
+        channel = grpc.insecure_channel("localhost:" + str(args.tf_serve_port))
+        local_cache["stub"] = prediction_service_pb2_grpc.PredictionServiceStub(channel)
 
-    # wait a bit for tf serving to start before querying metadata
-    limit = 300
-    for i in range(limit):
-        try:
-            local_cache["metadata"] = run_get_model_metadata()
-            break
-        except Exception as e:
-            if i == limit - 1:
-                logger.exception(
-                    "An error occurred, see `cx logs api {}` for more details.".format(api["name"])
-                )
-                sys.exit(1)
+        # wait a bit for tf serving to start before querying metadata
+        limit = 300
+        for i in range(limit):
+            try:
+                local_cache["metadata"] = run_get_model_metadata()
+                break
+            except Exception as e:
+                if i == limit - 1:
+                    logger.exception(
+                        "An error occurred, see `cx logs api {}` for more details.".format(
+                            api["name"]
+                        )
+                    )
+                    sys.exit(1)
 
-        time.sleep(1)
+            time.sleep(1)
 
-    logger.info("Serving model: {}".format(api["model_name"]))
-    serve(app, listen="*:{}".format(args.port))
+        logger.info("Serving model")
+        serve(app, listen="*:{}".format(args.port))
 
 
 def main():
     parser = argparse.ArgumentParser()
     na = parser.add_argument_group("required named arguments")
-    na.add_argument("--workload-id", required=True, help="Workload ID")
+    na.add_argument("--mode", type=str, required=True, help="Port (on localhost) to use")
+
     na.add_argument("--port", type=int, required=True, help="Port (on localhost) to use")
     na.add_argument(
         "--tf-serve-port", type=int, required=True, help="Port (on localhost) where TF Serving runs"
     )
-    na.add_argument(
-        "--context",
-        required=True,
-        help="S3 path to context (e.g. s3://bucket/path/to/context.json)",
-    )
-    na.add_argument("--api", required=True, help="Resource id of api to serve")
+    na.add_argument("--model-path", required=True, help="Directory to download the model to")
     na.add_argument("--model-dir", required=True, help="Directory to download the model to")
-    na.add_argument("--cache-dir", required=True, help="Local path for the context cache")
     parser.set_defaults(func=start)
 
     args = parser.parse_args()

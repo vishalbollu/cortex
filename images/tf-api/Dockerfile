@@ -12,4 +12,6 @@ COPY pkg/workloads/consts.py /src/
 COPY pkg/workloads/lib /src/lib
 COPY pkg/workloads/tf_api /src/tf_api
 
+
+
 ENTRYPOINT ["/usr/bin/python3", "/src/tf_api/api.py"]

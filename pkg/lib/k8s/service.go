@@ -51,6 +51,7 @@ func Service(spec *ServiceSpec) *corev1.Service {
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: spec.Selector,
+			Type:     corev1.ServiceTypeNodePort,
 			Ports: []corev1.ServicePort{
 				{
 					Protocol: corev1.ProtocolTCP,
