@@ -49,7 +49,7 @@ var localCmd = &cobra.Command{
 		ctx := context.Background()
 		resp, err := cli.ContainerCreate(ctx, &container.Config{
 			Image: "cortexlabs/serving-tf",
-			Env:   []string{"AWS_ACCESS_KEY_ID=" + key, "AWS_SECRET_ACCESS_KEY=" + secret, "EXTERNAL_MODEL_PATH=" + s3_path},
+			Env:   []string{"EXTERNAL_MODEL_PATH=" + s3_path},
 			ExposedPorts: nat.PortSet{
 				"8888/tcp": struct{}{},
 			},

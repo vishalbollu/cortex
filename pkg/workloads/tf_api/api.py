@@ -27,7 +27,6 @@ from tensorflow_serving.apis import predict_pb2
 from tensorflow_serving.apis import get_model_metadata_pb2
 from tensorflow_serving.apis import prediction_service_pb2_grpc
 from google.protobuf import json_format
-from lib.storage import S3
 
 import consts
 from lib import util
@@ -39,14 +38,7 @@ logger.propagate = False  # prevent double logging (flask modifies root logger)
 
 app = Flask(__name__)
 
-local_cache = {
-    "target_col": None,
-    "target_col_type": None,
-    "stub": None,
-    "trans_impls": {},
-    "required_inputs": None,
-    "metadata": None,
-}
+local_cache = {"stub": None, "metadata": None}
 
 DTYPE_TO_VALUE_KEY = {
     "DT_INT32": "intVal",
@@ -185,48 +177,41 @@ def predict():
 
 
 def start(args):
-    if args.mode == "init":
-        logger.info(args)
-        logger.info(os.environ)
-        S3.download_and_unzip_external(args.model_path, args.model_dir)
-    else:
-        # if not os.path.isdir(args.model_dir):
-        S3.download_and_unzip_external(args.model_path, args.model_dir)
+    logger.info(args)
+    logger.info(os.environ)
 
-        channel = grpc.insecure_channel("localhost:" + str(args.tf_serve_port))
-        local_cache["stub"] = prediction_service_pb2_grpc.PredictionServiceStub(channel)
+    channel = grpc.insecure_channel("localhost:" + str(args.tf_serve_port))
+    local_cache["stub"] = prediction_service_pb2_grpc.PredictionServiceStub(channel)
 
-        # wait a bit for tf serving to start before querying metadata
-        limit = 300
-        for i in range(limit):
-            try:
-                local_cache["metadata"] = run_get_model_metadata()
-                break
-            except Exception as e:
-                if i == limit - 1:
-                    logger.exception(
-                        "An error occurred, see `cx logs api {}` for more details.".format(
-                            api["name"]
-                        )
-                    )
-                    sys.exit(1)
+    # wait a bit for tf serving to start before querying metadata
+    limit = 300
+    for i in range(limit):
+        try:
+            local_cache["metadata"] = run_get_model_metadata()
+            break
+        except Exception as e:
+            if i == limit - 1:
+                logger.exception(
+                    "An error occurred, see `cx logs api {}` for more details.".format(api["name"])
+                )
+                sys.exit(1)
 
-            time.sleep(1)
+        time.sleep(1)
 
-        logger.info("Serving model")
-        serve(app, listen="*:{}".format(args.port))
+    logger.info("Serving model")
+    serve(app, listen="*:{}".format(args.port))
 
 
 def main():
     parser = argparse.ArgumentParser()
     na = parser.add_argument_group("required named arguments")
-    na.add_argument("--mode", type=str, required=True, help="Port (on localhost) to use")
+    # na.add_argument("--mode", type=str, required=True, help="Port (on localhost) to use")
 
     na.add_argument("--port", type=int, required=True, help="Port (on localhost) to use")
     na.add_argument(
         "--tf-serve-port", type=int, required=True, help="Port (on localhost) where TF Serving runs"
     )
-    na.add_argument("--model-path", required=True, help="Directory to download the model to")
+    na.add_argument("--model-path", required=True, help="Location of model")
     na.add_argument("--model-dir", required=True, help="Directory to download the model to")
     parser.set_defaults(func=start)
 

@@ -48,7 +48,7 @@ function build() {
   tag=$3
 
   blue_echo "Building $image:$tag..."
-  echo "docker build $ROOT -f $dir/Dockerfile -t cortexlabs/$image:$tag -t $REGISTRY_URL/cortexlabs/$image:$tag"
+  docker build $ROOT -f $dir/Dockerfile -t cortexlabs/$image:$tag -t $REGISTRY_URL/cortexlabs/$image:$tag
   green_echo "Built $image:$tag\n"
 }
 
@@ -102,10 +102,8 @@ if [ "$cmd" = "create" ]; then
   create_registry
 
 elif [ "$cmd" = "update" ]; then
-  # build_and_push $ROOT/images/serving-base serving-base latest
-  # build_and_push $ROOT/images/serving-tf serving-tf latest
+  build $ROOT/images/serving-base serving-base latest
+  build $ROOT/images/serving-tf serving-tf latest
   # build_and_push $ROOT/images/serving-tf-gpu serving-tf-gpu latest
-  docker build /Users/vishalbollu/src/github.com/cortexlabs/cortex -f /Users/vishalbollu/src/github.com/cortexlabs/cortex/images/serving-base/Dockerfile -t cortexlabs/serving-base:latest
-  docker build /Users/vishalbollu/src/github.com/cortexlabs/cortex -f /Users/vishalbollu/src/github.com/cortexlabs/cortex/images/serving-tf/Dockerfile -t cortexlabs/serving-tf:latest
   cleanup
 fi

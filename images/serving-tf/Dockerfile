@@ -10,7 +10,7 @@ RUN curl -o tensorflow-model-server.deb http://storage.googleapis.com/tensorflow
 RUN dpkg -i tensorflow-model-server.deb
 
 ENV MODEL_BASE_PATH="/mnt/model"
-ENV API_PORT=8888
+ENV PORT=8888
 ENV TF_SERVING_PORT=9000
 ENV EXTERNAL_MODEL_PATH="/mnt/model"
 
