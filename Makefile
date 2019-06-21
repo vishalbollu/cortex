@@ -47,6 +47,26 @@ tools:
 	@go get -u -v github.com/VojtechVitek/rerun/cmd/rerun
 	@pip3 install black
 
+# Kubernetes
+
+eks-up:
+	@./dev/eks.sh start
+
+eks-down:
+	@./dev/eks.sh stop
+
+eks-set:
+	@./dev/eks.sh set
+
+kops-up:
+	@./dev/kops.sh start
+
+kops-down:
+	@./dev/kops.sh stop
+
+kops-set:
+	@./dev/kops.sh set
+
 #########
 # Tests #
 #########

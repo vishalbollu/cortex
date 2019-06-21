@@ -14,22 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cmd
+package config
 
-import (
-	"github.com/spf13/cobra"
+const (
+	NameKey  = "name"
+	KindKey  = "kind"
+	ModelKey = "model"
 )
-
-func init() {
-	addEnvFlag(configureCmd)
-}
-
-var configureCmd = &cobra.Command{
-	Use:   "configure",
-	Short: "configure the CLI",
-	Long:  "Configure the CLI.",
-	Args:  cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
-		configure()
-	},
-}

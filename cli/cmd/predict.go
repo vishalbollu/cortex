@@ -17,29 +17,16 @@ limitations under the License.
 package cmd
 
 import (
-	"bytes"
 	"fmt"
-	"net/http"
-	"strings"
 
 	"github.com/spf13/cobra"
-
-	"github.com/cortexlabs/cortex/pkg/lib/cast"
-	"github.com/cortexlabs/cortex/pkg/lib/errors"
-	"github.com/cortexlabs/cortex/pkg/lib/files"
-	"github.com/cortexlabs/cortex/pkg/lib/json"
-	s "github.com/cortexlabs/cortex/pkg/lib/strings"
-	libtime "github.com/cortexlabs/cortex/pkg/lib/time"
-	"github.com/cortexlabs/cortex/pkg/lib/urls"
-	"github.com/cortexlabs/cortex/pkg/operator/api/resource"
-	"github.com/cortexlabs/cortex/pkg/operator/api/schema"
 )
 
 var predictPrintJSON bool
 
 func init() {
 	predictCmd.PersistentFlags().BoolVarP(&predictPrintJSON, "json", "j", false, "print the raw json response")
-	addAppNameFlag(predictCmd)
+	addDeploymentNameFlag(predictCmd)
 	addEnvFlag(predictCmd)
 }
 
@@ -62,100 +49,5 @@ var predictCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println(args)
-
-		apiName := args[0]
-		samplesJSONPath := args[1]
-
-		resourcesRes := &schema.GetResourcesResponse{}
-
-		apiGroupStatus := resourcesRes.APIGroupStatuses[apiName]
-		if apiGroupStatus == nil {
-			errors.Exit(ErrorAPINotFound(apiName))
-		}
-		if apiGroupStatus.ActiveStatus == nil {
-			errors.Exit(ErrorAPINotReady(apiName, apiGroupStatus.Message()))
-		}
-
-		apiPath := apiGroupStatus.ActiveStatus.Path
-		apiURL := urls.Join(resourcesRes.APIsBaseURL, apiPath)
-		predictResponse, err := makePredictRequest(apiURL, samplesJSONPath)
-		if err != nil {
-			if strings.Contains(err.Error(), "503 Service Temporarily Unavailable") || strings.Contains(err.Error(), "502 Bad Gateway") {
-				errors.Exit(ErrorAPINotReady(apiName, resource.StatusUpdating.Message()))
-			}
-			errors.Exit(err)
-		}
-
-		if predictPrintJSON {
-			prettyResp, err := json.Pretty(predictResponse)
-			if err != nil {
-				errors.Exit(err)
-			}
-
-			fmt.Println(prettyResp)
-			return
-		}
-
-		apiID := predictResponse.ResourceID
-		api := resourcesRes.APIStatuses[apiID]
-
-		apiStart := libtime.LocalTimestampHuman(api.Start)
-		fmt.Println("\n" + apiName + " was last updated on " + apiStart + "\n")
-
-		if len(predictResponse.Predictions) == 1 {
-			fmt.Println("Prediction:")
-		} else {
-			fmt.Println("Predictions:")
-		}
-
-		for _, prediction := range predictResponse.Predictions {
-			if prediction.Prediction == nil {
-				prettyResp, err := json.Pretty(prediction.Response)
-				if err != nil {
-					errors.Exit(err)
-				}
-
-				fmt.Println(prettyResp)
-				continue
-			}
-
-			value := prediction.Prediction
-			if prediction.PredictionReversed != nil {
-				value = prediction.PredictionReversed
-			}
-
-			if cast.IsFloatType(value) {
-				casted, _ := cast.InterfaceToFloat64(value)
-				fmt.Println(s.Round(casted, 2, true))
-			} else {
-				fmt.Println(s.UserStrStripped(value))
-			}
-		}
 	},
-}
-
-func makePredictRequest(apiURL string, samplesJSONPath string) (*PredictResponse, error) {
-	samplesBytes, err := files.ReadFileBytes(samplesJSONPath)
-	if err != nil {
-		errors.Exit(err)
-	}
-	payload := bytes.NewBuffer(samplesBytes)
-	req, err := http.NewRequest("POST", apiURL, payload)
-	if err != nil {
-		return nil, errors.Wrap(err, errStrCantMakeRequest)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	httpResponse, err := makeRequest(req)
-	if err != nil {
-		return nil, err
-	}
-
-	var predictResponse PredictResponse
-	err = json.DecodeWithNumber(httpResponse, &predictResponse)
-	if err != nil {
-		return nil, errors.Wrap(err, "prediction response")
-	}
-
-	return &predictResponse, nil
 }

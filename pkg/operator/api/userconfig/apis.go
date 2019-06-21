@@ -18,7 +18,7 @@ package userconfig
 
 import (
 	"github.com/cortexlabs/cortex/pkg/lib/aws"
-	cr "github.com/cortexlabs/cortex/pkg/lib/configreader"
+	"github.com/cortexlabs/cortex/pkg/lib/configreader"
 	"github.com/cortexlabs/cortex/pkg/lib/errors"
 	"github.com/cortexlabs/cortex/pkg/operator/api/resource"
 )
@@ -27,24 +27,22 @@ type APIs []*API
 
 type API struct {
 	ResourceFields
-	Model         *string        `json:"model" yaml:"model"`
-	ExternalModel *ExternalModel `json:"external_model" yaml:"external_model"`
-	Compute       *APICompute    `json:"compute" yaml:"compute"`
-	Tags          Tags           `json:"tags" yaml:"tags"`
+	Model   string      `json:"model" yaml:"model"`
+	Compute *APICompute `json:"compute" yaml:"compute"`
 }
 
-var apiValidation = &cr.StructValidation{
-	StructFieldValidations: []*cr.StructFieldValidation{
+var apiValidation = &configreader.StructValidation{
+	StructFieldValidations: []*configreader.StructFieldValidation{
 		{
 			StructField: "Name",
-			StringValidation: &cr.StringValidation{
+			StringValidation: &configreader.StringValidation{
 				Required: true,
 				DNS1035:  true,
 			},
 		},
 		{
 			StructField: "Model",
-			StringPtrValidation: &cr.StringPtrValidation{
+			StringPtrValidation: &configreader.StringPtrValidation{
 				RequireCortexResources: true,
 			},
 		},
@@ -63,19 +61,19 @@ type ExternalModel struct {
 	Region string `json:"region" yaml:"region"`
 }
 
-var externalModelFieldValidation = &cr.StructValidation{
+var externalModelFieldValidation = &configreader.StructValidation{
 	DefaultNil: true,
-	StructFieldValidations: []*cr.StructFieldValidation{
+	StructFieldValidations: []*configreader.StructFieldValidation{
 		{
 			StructField: "Path",
-			StringValidation: &cr.StringValidation{
-				Validator: cr.GetS3PathValidator(),
+			StringValidation: &configreader.StringValidation{
+				Validator: configreader.GetS3PathValidator(),
 				Required:  true,
 			},
 		},
 		{
 			StructField: "Region",
-			StringValidation: &cr.StringValidation{
+			StringValidation: &configreader.StringValidation{
 				Default:       aws.DefaultS3Region,
 				AllowedValues: aws.S3Regions.Slice(),
 			},

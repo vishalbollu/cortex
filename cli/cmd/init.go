@@ -29,14 +29,14 @@ import (
 )
 
 var initCmd = &cobra.Command{
-	Use:   "init APP_NAME",
-	Short: "initialize an application",
-	Long:  "Initialize an application.",
+	Use:   "init DEPLOYMENT_NAME",
+	Short: "initialize a deployment",
+	Long:  "Initialize a deployment.",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		appName := args[0]
+		deploymentName := args[0]
 
-		if err := urls.CheckDNS1123(appName); err != nil {
+		if err := urls.CheckDNS1123(deploymentName); err != nil {
 			errors.Exit(err)
 		}
 
@@ -45,19 +45,19 @@ var initCmd = &cobra.Command{
 			errors.Exit(err)
 		}
 
-		if currentRoot := appRootOrBlank(); currentRoot != "" {
-			errors.Exit(ErrorCLIAlreadyInAppDir(currentRoot))
+		if currentRoot := cortexRootOrBlank(); currentRoot != "" {
+			errors.Exit(ErrorCLIAlreadyInCortexDir(currentRoot))
 		}
 
-		appRoot := filepath.Join(cwd, appName)
+		cortexRoot := filepath.Join(cwd, deploymentName)
 		var createdFiles []string
 
-		if _, err := files.CreateDirIfMissing(appRoot); err != nil {
+		if _, err := files.CreateDirIfMissing(cortexRoot); err != nil {
 			errors.Exit(err)
 		}
 
-		for path, content := range appInitFiles(appName) {
-			createdFiles = writeFile(path, content, appRoot, createdFiles)
+		for path, content := range initFiles(deploymentName) {
+			createdFiles = writeFile(path, content, cortexRoot, createdFiles)
 		}
 
 		fmt.Println("Created files:")
@@ -77,17 +77,15 @@ func writeFile(subPath string, content string, root string, createdFiles []strin
 	return append(createdFiles, path)
 }
 
-func appInitFiles(appName string) map[string]string {
+func initFiles(deploymentName string) map[string]string {
 	return map[string]string{
-		"app.yaml": fmt.Sprintf("- kind: app\n  name: %s\n", appName),
-
-		"resources/apis.yaml": `## Sample API:
+		"cortex.yaml": fmt.Sprintf("- kind: deployment\n  name: %s\n", deploymentName) + `
+## Sample API:
 #
 # - kind: api
 #   name: my-api
-#   model: @my_model
-#   compute:
-#     replicas: 1
+#   model: s3://my-bucket/my-model.zip
+#   replicas: 1
 `,
 
 		"samples.json": `{

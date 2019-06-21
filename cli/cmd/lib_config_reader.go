@@ -20,20 +20,18 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cortexlabs/cortex/pkg/consts"
+	"github.com/cortexlabs/cortex/pkg/config"
 	"github.com/cortexlabs/cortex/pkg/lib/errors"
 	"github.com/cortexlabs/cortex/pkg/lib/files"
-	"github.com/cortexlabs/cortex/pkg/lib/sets/strset"
-	"github.com/cortexlabs/cortex/pkg/operator/api/userconfig"
 )
 
-func appRootOrBlank() string {
+func cortexRootOrBlank() string {
 	dir, err := os.Getwd()
 	if err != nil {
 		errors.Exit(err)
 	}
 	for true {
-		if err := files.CheckFile(filepath.Join(dir, "app.yaml")); err == nil {
+		if err := files.CheckFile(filepath.Join(dir, "cortex.yaml")); err == nil {
 			return dir
 		}
 		if dir == "/" {
@@ -44,12 +42,30 @@ func appRootOrBlank() string {
 	return "" // unreachable
 }
 
-func mustAppRoot() string {
-	appRoot := appRootOrBlank()
-	if appRoot == "" {
-		errors.Exit(ErrorCliNotInAppDir())
+func deploymentNameFromConfig() (string, error) {
+	cortexRoot := mustCortexRoot()
+	return config.ReadDeploymentName(filepath.Join(cortexRoot, "cortex.yaml"), "cortex.yaml")
+}
+
+func DeploymentNameFromFlagOrConfig() (string, error) {
+	if flagDeploymentName != "" {
+		return flagDeploymentName, nil
 	}
-	return appRoot
+
+	deploymentName, err := deploymentNameFromConfig()
+	if err != nil {
+		return "", err
+	}
+
+	return deploymentName, nil
+}
+
+func mustCortexRoot() string {
+	cortexRoot := cortexRootOrBlank()
+	if cortexRoot == "" {
+		errors.Exit(ErrorCliNotInCortexDir())
+	}
+	return cortexRoot
 }
 
 func yamlPaths(dir string) []string {
@@ -66,43 +82,4 @@ func pythonPaths(dir string) []string {
 		errors.Exit(err)
 	}
 	return pyPaths
-}
-
-func allConfigPaths(root string) []string {
-	exportPaths := strset.New()
-	requirementsPath := filepath.Join(root, consts.RequirementsTxt)
-	if err := files.CheckFile(requirementsPath); err == nil {
-		exportPaths.Add(requirementsPath)
-	}
-
-	customPackagesRoot := filepath.Join(root, consts.PackageDir)
-	if err := files.CheckDir(customPackagesRoot); err == nil {
-		customPackagesPaths, err := files.ListDirRecursive(customPackagesRoot, false, files.IgnoreHiddenFiles, files.IgnoreHiddenFolders, files.IgnorePythonGeneratedFiles)
-		if err != nil {
-			errors.Exit(err)
-		}
-		exportPaths.Add(customPackagesPaths...)
-	}
-	exportPaths.Add(yamlPaths(root)...)
-	exportPaths.Add(pythonPaths(root)...)
-
-	return exportPaths.Slice()
-}
-
-func appNameFromConfig() (string, error) {
-	appRoot := mustAppRoot()
-	return userconfig.ReadAppName(filepath.Join(appRoot, "app.yaml"), "app.yaml")
-}
-
-func AppNameFromFlagOrConfig() (string, error) {
-	if flagAppName != "" {
-		return flagAppName, nil
-	}
-
-	appName, err := appNameFromConfig()
-	if err != nil {
-		return "", err
-	}
-
-	return appName, nil
 }

@@ -21,6 +21,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/cortexlabs/cortex/pkg/config"
+	"github.com/cortexlabs/cortex/pkg/lib/debug"
 	"github.com/cortexlabs/cortex/pkg/lib/errors"
 )
 
@@ -33,8 +35,8 @@ func init() {
 
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
-	Short: "deploy an application",
-	Long:  "Deploy an application.",
+	Short: "deploy APIs",
+	Long:  "Deploy APIs.",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		deploy(flagDeployForce, false)
@@ -42,12 +44,14 @@ var deployCmd = &cobra.Command{
 }
 
 func deploy(force bool, ignoreCache bool) {
-	root := mustAppRoot()
-	appName, err := appNameFromConfig()
+	root := mustCortexRoot()
+
+	configPaths := yamlPaths(root)
+	cfg, err := config.NewFromFiles(configPaths)
 	if err != nil {
 		errors.Exit(err)
 	}
 
 	fmt.Println(root)
-	fmt.Println(appName)
+	debug.Pp(cfg)
 }

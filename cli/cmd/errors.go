@@ -31,23 +31,23 @@ type ErrorKind int
 
 const (
 	ErrUnknown ErrorKind = iota
-	ErrCliAlreadyInAppDir
+	ErrCliAlreadyInCortexDir
 	ErrAPINotReady
 	ErrAPINotFound
 	ErrFailedToConnect
-	ErrCliNotInAppDir
+	ErrCliNotInCortexDir
 )
 
 var errorKinds = []string{
 	"err_unknown",
-	"err_cli_already_in_app_dir",
+	"err_cli_already_in_cortex_dir",
 	"err_api_not_ready",
 	"err_api_not_found",
 	"err_failed_to_connect",
-	"err_cli_not_in_app_dir",
+	"err_cli_not_in_cortex_dir",
 }
 
-var _ = [1]int{}[int(ErrCliNotInAppDir)-(len(errorKinds)-1)] // Ensure list length matches
+var _ = [1]int{}[int(ErrCliNotInCortexDir)-(len(errorKinds)-1)] // Ensure list length matches
 
 func (t ErrorKind) String() string {
 	return errorKinds[t]
@@ -92,10 +92,10 @@ func (e Error) Error() string {
 	return e.message
 }
 
-func ErrorCLIAlreadyInAppDir(dirPath string) error {
+func ErrorCLIAlreadyInCortexDir(dirPath string) error {
 	return Error{
-		Kind:    ErrCliAlreadyInAppDir,
-		message: fmt.Sprintf("your current working directory is already in a cortex app directory (%s)", dirPath),
+		Kind:    ErrCliAlreadyInCortexDir,
+		message: fmt.Sprintf("your current working directory is already in a cortex directory (%s)", dirPath),
 	}
 }
 
@@ -113,9 +113,9 @@ func ErrorAPINotFound(apiName string) error {
 	}
 }
 
-func ErrorCliNotInAppDir() error {
+func ErrorCliNotInCortexDir() error {
 	return Error{
-		Kind:    ErrCliNotInAppDir,
-		message: "your current working directory is not in or under a cortex app directory (identified via a top-level app.yaml file)",
+		Kind:    ErrCliNotInCortexDir,
+		message: "your current working directory is not in or under a cortex directory (identified via a top-level cortex.yaml file)",
 	}
 }

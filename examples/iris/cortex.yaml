@@ -1,0 +1,11 @@
+- kind: deployment
+  name: iris
+  provider:
+    name: local
+
+# Sample API:
+
+- kind: api
+  name: my-api
+  model: s3://my-bucket/my-model.zip
+  # replicas: 1

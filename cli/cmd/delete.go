@@ -25,22 +25,22 @@ import (
 )
 
 var deleteCmd = &cobra.Command{
-	Use:   "delete [APP_NAME]",
+	Use:   "delete [DEPLOYMENT_NAME]",
 	Short: "delete a deployment",
 	Long:  "Delete a deployment.",
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		var appName string
+		var deploymentName string
 		var err error
 		if len(args) == 1 {
-			appName = args[0]
+			deploymentName = args[0]
 		} else {
-			appName, err = appNameFromConfig()
+			deploymentName, err = deploymentNameFromConfig()
 			if err != nil {
 				errors.Exit(err)
 			}
 		}
 
-		fmt.Println(appName)
+		fmt.Println(deploymentName)
 	},
 }

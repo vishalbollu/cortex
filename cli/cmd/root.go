@@ -36,7 +36,7 @@ var cmdStr string
 
 var flagEnv string
 var flagWatch bool
-var flagAppName string
+var flagDeploymentName string
 
 var configFileExts = []string{"yaml", "yml"}
 
@@ -72,10 +72,8 @@ func Execute() {
 	rootCmd.AddCommand(deleteCmd)
 
 	rootCmd.AddCommand(getCmd)
-	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(logsCmd)
 
-	rootCmd.AddCommand(configureCmd)
 	rootCmd.AddCommand(completionCmd)
 
 	rootCmd.Execute()
@@ -89,8 +87,8 @@ func addWatchFlag(cmd *cobra.Command) {
 	cmd.PersistentFlags().BoolVarP(&flagWatch, "watch", "w", false, "re-run the command every 2 seconds")
 }
 
-func addAppNameFlag(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVarP(&flagAppName, "app", "a", "", "app name")
+func addDeploymentNameFlag(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringVarP(&flagDeploymentName, "deployment", "d", "", "deployment name")
 }
 
 func getTerminalWidth() int {
