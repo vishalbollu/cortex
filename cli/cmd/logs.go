@@ -17,8 +17,16 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
+	"context"
+	"encoding/json"
+	"io"
+	"os"
+	"path/filepath"
 
+	"github.com/cortexlabs/cortex/pkg/lib/debug"
+	"github.com/cortexlabs/cortex/pkg/lib/files"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 )
 
@@ -31,8 +39,45 @@ var logsCmd = &cobra.Command{
 	Use:   "logs RESOURCE_NAME",
 	Short: "get logs for a resource",
 	Long:  "Get logs for a resource.",
-	Args:  cobra.RangeArgs(1, 2),
+	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(args)
+		dir, err := os.Getwd()
+		if err != nil {
+			panic(err)
+		}
+
+		cortexConfig := &CortexConfig{}
+		cortexConfigPath := filepath.Join(dir, "cortex.json")
+		bytes, err := files.ReadFileBytes(cortexConfigPath)
+		if err != nil {
+			panic(err)
+		}
+		json.Unmarshal(bytes, cortexConfig)
+
+		dockerClient, err := client.NewEnvClient()
+		if err != nil {
+			panic(err)
+		}
+		ctx := context.Background()
+		var localDeployment LocalDeployment
+		for _, ld := range cortexConfig.LocalDeployments {
+			if ld.Name == args[0] {
+				localDeployment = *ld
+			}
+		}
+		debug.Pp(localDeployment)
+		reader, err := dockerClient.ContainerLogs(ctx, localDeployment.ContainerID, types.ContainerLogsOptions{
+			ShowStdout: true,
+			ShowStderr: true,
+			Follow:     true,
+		})
+		if err != nil {
+			panic(err)
+		}
+		defer reader.Close()
+		_, err = io.Copy(os.Stdout, reader)
+		if err != nil && err != io.EOF {
+			panic(err)
+		}
 	},
 }

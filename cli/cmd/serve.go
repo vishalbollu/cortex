@@ -111,6 +111,7 @@ func createDeployment(client *kubernetes.Clientset) {
 		},
 		Namespace: NAMESPACE,
 	})
+
 	_, err := client.AppsV1beta1().Deployments(NAMESPACE).Create(dep)
 	if err != nil {
 		errors.Exit(err)

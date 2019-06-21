@@ -2,9 +2,9 @@
 
 # Start the first process
 
-/usr/bin/python3 /src/tf_api/api.py --mode=init --tf-serve-port=$TF_SERVING_PORT --port=$PORT --model-path=$EXTERNAL_MODEL_PATH --model-dir=$MODEL_BASE_PATH
+# /usr/bin/python3 /src/tf_api/api.py --tf-serve-port=$TF_SERVING_PORT --port=$PORT --model-path=$EXTERNAL_MODEL_PATH --model-dir=$MODEL_BASE_PATH
 
-/usr/bin/python3 /src/tf_api/api.py --mode=run --tf-serve-port=$TF_SERVING_PORT --port=$PORT --model-path=$EXTERNAL_MODEL_PATH --model-dir=$MODEL_BASE_PATH &
+/usr/bin/python3 /src/tf_api/api.py --tf-serve-port=$TF_SERVING_PORT --port=$PORT --model-path=$EXTERNAL_MODEL_PATH --model-dir=$MODEL_BASE_PATH &
 
 status=$?
 if [ $status -ne 0 ]; then

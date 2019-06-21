@@ -69,14 +69,12 @@ func Execute() {
 	rootCmd.AddCommand(deployCmd)
 	rootCmd.AddCommand(serveCmd)
 	rootCmd.AddCommand(localCmd)
-	rootCmd.AddCommand(ecsCmd)
 
 	rootCmd.AddCommand(refreshCmd)
 	rootCmd.AddCommand(predictCmd)
 	rootCmd.AddCommand(deleteCmd)
 
 	rootCmd.AddCommand(getCmd)
-	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(logsCmd)
 
 	rootCmd.AddCommand(configureCmd)

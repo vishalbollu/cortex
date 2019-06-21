@@ -23,10 +23,16 @@ from flask import Flask, request, jsonify
 from flask_api import status
 from waitress import serve
 import grpc
-from tensorflow_serving.apis import predict_pb2
-from tensorflow_serving.apis import get_model_metadata_pb2
+from tensorflow_serving.apis import (
+    predict_pb2,
+    get_model_metadata_pb2,
+    prediction_service_pb2_grpc,
+    get_model_status_pb2,
+    model_service_pb2_grpc,
+)
 from tensorflow_serving.apis import prediction_service_pb2_grpc
 from google.protobuf import json_format
+from lib.storage import LocalStorage
 
 import consts
 from lib import util
@@ -130,7 +136,19 @@ def prediction_failed(sample, reason=None):
 
 @app.route("/healthz", methods=["GET"])
 def health():
-    return jsonify({"ok": True})
+    request = get_model_status_pb2.GetModelStatusRequest()
+    request.model_spec.name = "default"
+    channel = grpc.insecure_channel("localhost:9000")
+    stub = model_service_pb2_grpc.ModelServiceStub(channel)
+    result = stub.GetModelStatus(request, 10.0)
+    model_status = result.model_version_status
+    if len(model_status) != 0 and model_status[0].status.error_code == 0:
+        return jsonify({"ok": True})
+
+    return (
+        "non-zero model version status for model version " + model_status[0].status.error_code,
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
 
 
 @app.route("/", methods=["POST"])
@@ -192,7 +210,7 @@ def start(args):
         except Exception as e:
             if i == limit - 1:
                 logger.exception(
-                    "An error occurred, see `cx logs api {}` for more details.".format(api["name"])
+                    "An error occurred, see `cx logs api {}` for more details.".format()
                 )
                 sys.exit(1)
 

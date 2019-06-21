@@ -17,11 +17,16 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
+	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
+
+	"github.com/cortexlabs/cortex/pkg/lib/files"
 	"github.com/spf13/cobra"
-
-	"github.com/cortexlabs/cortex/pkg/lib/errors"
 )
 
 var deleteCmd = &cobra.Command{
@@ -30,17 +35,31 @@ var deleteCmd = &cobra.Command{
 	Long:  "Delete a deployment.",
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		var appName string
-		var err error
-		if len(args) == 1 {
-			appName = args[0]
-		} else {
-			appName, err = appNameFromConfig()
-			if err != nil {
-				errors.Exit(err)
-			}
+		dir, err := os.Getwd()
+		if err != nil {
+			panic(err)
 		}
 
-		fmt.Println(appName)
+		cortexConfig := &CortexConfig{}
+		cortexConfigPath := filepath.Join(dir, "cortex.json")
+		bytes, err := files.ReadFileBytes(cortexConfigPath)
+		if err != nil {
+			panic(err)
+		}
+		json.Unmarshal(bytes, cortexConfig)
+
+		dockerClient, err := client.NewEnvClient()
+		if err != nil {
+			panic(err)
+		}
+		ctx := context.Background()
+		for _, localDeployment := range cortexConfig.LocalDeployments {
+			err := dockerClient.ContainerRemove(ctx, localDeployment.ContainerID, types.ContainerRemoveOptions{
+				Force: true,
+			})
+			if err != nil {
+				panic(err)
+			}
+		}
 	},
 }

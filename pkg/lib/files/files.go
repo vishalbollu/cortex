@@ -25,6 +25,7 @@ import (
 	"sort"
 	"strings"
 
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/xlab/treeprint"
 
 	"github.com/cortexlabs/cortex/pkg/lib/errors"
@@ -87,6 +88,22 @@ func TrimDirPrefix(fullPath string, dirPath string) string {
 		dirPath = dirPath + "/"
 	}
 	return strings.TrimPrefix(fullPath, dirPath)
+}
+
+func FullPath(path string) (string, error) {
+	path, err := homedir.Expand(path)
+	if err != nil {
+		return "", errors.Wrap(err, "unable to expand home path", path)
+	}
+
+	if !filepath.IsAbs(path) {
+		path, err = filepath.Abs(path)
+		if err != nil {
+			return "", errors.Wrap(err, "unable to get absolute path", path)
+		}
+	}
+
+	return filepath.Clean(path), nil
 }
 
 func RelPath(userPath string, baseDir string) string {

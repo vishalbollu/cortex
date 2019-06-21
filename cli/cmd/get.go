@@ -17,17 +17,24 @@ limitations under the License.
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 
+	"github.com/cortexlabs/cortex/pkg/lib/debug"
+	"github.com/cortexlabs/cortex/pkg/lib/files"
 	"github.com/cortexlabs/cortex/pkg/lib/sets/strset"
 	s "github.com/cortexlabs/cortex/pkg/lib/strings"
 	libtime "github.com/cortexlabs/cortex/pkg/lib/time"
 	"github.com/cortexlabs/cortex/pkg/lib/urls"
+
 	"github.com/cortexlabs/cortex/pkg/operator/api/context"
 	"github.com/cortexlabs/cortex/pkg/operator/api/resource"
 	"github.com/cortexlabs/cortex/pkg/operator/api/schema"
@@ -44,7 +51,7 @@ var getCmd = &cobra.Command{
 	Use:   "get [RESOURCE_NAME]",
 	Short: "get information about resources",
 	Long:  "Get information about resources.",
-	Args:  cobra.RangeArgs(0, 2),
+	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		rerun(func() (string, error) {
 			return runGet(cmd, args)
@@ -53,12 +60,50 @@ var getCmd = &cobra.Command{
 }
 
 func runGet(cmd *cobra.Command, args []string) (string, error) {
-	appName, err := AppNameFromFlagOrConfig()
+	dir, err := os.Getwd()
 	if err != nil {
-		return "", err
+		panic(err)
 	}
 
-	return appName + " " + strings.Join(args, ", "), nil
+	cortexConfig := &CortexConfig{}
+	cortexConfigPath := filepath.Join(dir, "cortex.json")
+	bytes, err := files.ReadFileBytes(cortexConfigPath)
+	if err != nil {
+		panic(err)
+	}
+	json.Unmarshal(bytes, cortexConfig)
+
+	var outputStr string
+	if len(args) == 0 {
+		for _, ld := range cortexConfig.LocalDeployments {
+			resp, err := http.Get("http://localhost:" + ld.Port + "/healthz")
+			if err != nil {
+				panic(err)
+			}
+			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+				outputStr += ld.Name + " " + "OK\n"
+			} else {
+				outputStr += ld.Name + " " + "ERROR\n"
+			}
+		}
+	} else {
+		for _, ld := range cortexConfig.LocalDeployments {
+			if ld.Name == args[0] {
+				resp, err := http.Get("http://localhost:" + ld.Port + "/healthz")
+				if err != nil {
+					panic(err)
+				}
+				if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+					outputStr += ld.Name + " " + "OK\n"
+				} else {
+					outputStr += ld.Name + " " + "ERROR\n"
+				}
+				outputStr += debug.Sppg(ld)
+			}
+		}
+	}
+
+	return outputStr, nil
 }
 
 func apisStr(apiGroupStatuses map[string]*resource.APIGroupStatus) string {

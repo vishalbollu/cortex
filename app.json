@@ -1,0 +1,8 @@
+{
+    "local_apis": [
+        {
+            "name": "iris",
+            "path": "~/Desktop/iris-model"
+        }
+    ]
+}
