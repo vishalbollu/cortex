@@ -1,8 +1,8 @@
-# Plot in-flight requests
+# View API metrics
 
 _WARNING: you are on the master branch, please refer to the docs on the branch that matches your `cortex version`_
 
-The `cortex get` and `cortex get API_NAME` commands display the request time (averaged over the past 2 weeks) and response code counts (summed over the past 2 weeks) for your API(s):
+The `cortex get` and `cortex get API_NAME` commands display the request time \(averaged over the past 2 weeks\) and response code counts \(summed over the past 2 weeks\) for your API\(s\):
 
 ```text
 $ cx get
@@ -24,12 +24,13 @@ Shows the number of 2XX, 4XX, and 5XX responses per minute.
 
 Shows the total number of in-flight requests in the cluster.
 
-Note: This is a sum over 10 second intervals because each replica reports it's in-flight requests once per 10 seconds. This plot is only available for the last 3 hours (because second-granular data is aggregated to minute-granular data after 3 hours). To plot data older than 3 hours, instead sum over 1 minute, and divide the y-axis by 6 to determine the number of in-flight requests (since the metrics are reported every 10 seconds).
+Note: This is a sum over 10 second intervals because each replica reports it's in-flight requests once per 10 seconds. This plot is only available for the last 3 hours \(because second-granular data is aggregated to minute-granular data after 3 hours\). To plot data older than 3 hours, instead sum over 1 minute, and divide the y-axis by 6 to determine the number of in-flight requests \(since the metrics are reported every 10 seconds\).
 
 **median response time**
 
-Shows the median response time for requests, over 1-minute periods (measured in milliseconds).
+Shows the median response time for requests, over 1-minute periods \(measured in milliseconds\).
 
 **p99 response time**
 
-Shows the p99 response time for requests, over 1-minute periods (measured in milliseconds).
+Shows the p99 response time for requests, over 1-minute periods \(measured in milliseconds\).
+

@@ -1,10 +1,10 @@
 # Table of contents
 
 * [Build machine learning APIs](../README.md)
-* [Install](cluster-management/install.md)
-* [Tutorial](../examples/sklearn/iris-classifier/README.md)
+* [Install](install.md)
+* [Tutorial](iris-classifier.md)
 * [GitHub](https://github.com/cortexlabs/cortex)
-* [Examples](https://github.com/cortexlabs/cortex/tree/master/examples)  <!-- CORTEX_VERSION_MINOR -->
+* [Examples](https://github.com/cortexlabs/cortex/tree/master/examples)
 * [Chat with us](https://gitter.im/cortexlabs/cortex)
 * [Email us](mailto:hello@cortex.dev)
 * [We're hiring](https://angel.co/cortex-labs-inc/jobs)
@@ -48,7 +48,7 @@
 * [API is stuck updating](troubleshooting/stuck-updating.md)
 * [404/503 API responses](troubleshooting/api-request-errors.md)
 * [NVIDIA runtime not found](troubleshooting/nvidia-container-runtime-not-found.md)
-* [TF session in predict()](troubleshooting/tf-session-in-predict.md)
+* [TF session in predict\(\)](troubleshooting/tf-session-in-predict.md)
 
 ## Guides
 
@@ -63,3 +63,4 @@
 ## Contributing
 
 * [Development](contributing/development.md)
+

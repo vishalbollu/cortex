@@ -2,14 +2,13 @@
 
 _WARNING: you are on the master branch, please refer to the docs on the branch that matches your `cortex version`_
 
-We have plans to support a batch interface to Cortex APIs ([#523](https://github.com/cortexlabs/cortex/issues/523)), but until that's implemented, it is possible to implement a batch runner which receives the batch request, splits it into individual requests, and sends them to the prediction API.
+We have plans to support a batch interface to Cortex APIs \([\#523](https://github.com/cortexlabs/cortex/issues/523)\), but until that's implemented, it is possible to implement a batch runner which receives the batch request, splits it into individual requests, and sends them to the prediction API.
 
 _Note: this is experimental. Also, this behavior can be implemented outside of Cortex, e.g. in your backend server if you have one._
 
-<!-- CORTEX_VERSION_MINOR x2 -->
 This example assumes you have deployed an iris-classifier API, e.g. [examples/sklearn/iris-classifier](https://github.com/cortexlabs/cortex/tree/master/examples/sklearn/iris-classifier) or [examples/tensorflow/iris-classifier](https://github.com/cortexlabs/cortex/tree/master/examples/tensorflow/iris-classifier).
 
-Create a new directory (outside of the iris example directory) with the files listed below, and run `cortex deploy` in that directory to deploy the batch API. Run `python test.py http://***.elb.us-west-2.amazonaws.com/iris-classifier-batch` to submit a batch of requests to the batch api (replace `***` with your actual endpoint). You can still send individual requests to the prediction API (bypassing the batch API) if you'd like.
+Create a new directory \(outside of the iris example directory\) with the files listed below, and run `cortex deploy` in that directory to deploy the batch API. Run `python test.py http://***.elb.us-west-2.amazonaws.com/iris-classifier-batch` to submit a batch of requests to the batch api \(replace `***` with your actual endpoint\). You can still send individual requests to the prediction API \(bypassing the batch API\) if you'd like.
 
 Feel free to reach out on [gitter](https://gitter.im/cortexlabs/cortex) if you have questions.
 
@@ -131,3 +130,4 @@ try:
 except requests.exceptions.ReadTimeout:
     pass
 ```
+
