@@ -2,7 +2,7 @@
 
 _WARNING: you are on the master branch, please refer to the docs on the branch that matches your `cortex version`_
 
-[Spot instances](https://aws.amazon.com/ec2/spot/) are spare capacity that AWS sells at a discount (up to 90%). The caveat is that spot instances may not always be available, and can be recalled by AWS at anytime. Cortex allows you to use spot instances in your cluster to take advantage of the discount while ensuring uptime and reliability of APIs. You can configure your cluster to use spot instances using the configuration below:
+[Spot instances](https://aws.amazon.com/ec2/spot/) are spare capacity that AWS sells at a discount \(up to 90%\). The caveat is that spot instances may not always be available, and can be recalled by AWS at anytime. Cortex allows you to use spot instances in your cluster to take advantage of the discount while ensuring uptime and reliability of APIs. You can configure your cluster to use spot instances using the configuration below:
 
 ```yaml
 # cluster.yaml
@@ -33,18 +33,17 @@ spot_config:
 
 Spot instances are not guaranteed to be available. The chances of getting spot instances can be improved by providing `instance_distribution`, a list of alternative instance types to the primary `instance_type` you specified. If left blank, Cortex will only include the primary instance type in the `instance_distribution`. Cortex defaults the `max_price` to the on-demand price of the primary instance.
 
-Spot instances can be mixed with on-demand instances by configuring `on_demand_base_capacity` and `on_demand_percentage_above_base_capacity`. `on_demand_base_capacity` enforces the minimum number of nodes that will be fulfilled by on-demand instances as your cluster is scaling up. `on_demand_percentage_above_base_capacity` defines the percentage of instances that will be on-demand after the base capacity has been fulfilled (the rest being spot instances). `instance_pools` is the number of pools per availability zone to allocate your instances from. See [here](https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html) for more details.
+Spot instances can be mixed with on-demand instances by configuring `on_demand_base_capacity` and `on_demand_percentage_above_base_capacity`. `on_demand_base_capacity` enforces the minimum number of nodes that will be fulfilled by on-demand instances as your cluster is scaling up. `on_demand_percentage_above_base_capacity` defines the percentage of instances that will be on-demand after the base capacity has been fulfilled \(the rest being spot instances\). `instance_pools` is the number of pools per availability zone to allocate your instances from. See [here](https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_InstancesDistribution.html) for more details.
 
 Even if multiple instances are specified in your `instance_distribution` on-demand instances are mixed, there is still a possibility of running into scale up issues when attempting to spin up spot instances. Spot instance requests may not be fulfilled for several reasons. Spot instance pricing fluctuates, therefore the `max_price` may be lower than the current spot pricing rate. Another possibility could be that the availability zones of the cluster ran out of spot instances. `on_demand_backup` can be used mitigate the impact of unfulfilled spot requests by enabling the cluster to spin up on-demand instances if spot instance requests are not fulfilled within 5 minutes.
 
-There is a spot instance limit associated with your AWS account for each region. You can check your current limit [here](https://console.aws.amazon.com/ec2/v2/home?#Limits:) (set the region in the upper right corner to your desired region, and search for "spot"). Note that the listed spot instance limit may misrepresent the actual number of spot instances you can allocate. Your actual spot instance limit depends on the instance type you have requested. In general, you can run a higher number of smaller instance types, or fewer large instance types. For example, even if the limit shows `20`, if you are requesting large instances like `p2.xlarge`, the actual limit may be lower due to the way AWS calculates this limit. If you are not getting the number of spot instances that you are expecting for your instance type, you can request a limit increase [here](https://console.aws.amazon.com/support/home#/case/create?issueType=service-limit-increase&limitType=service-code-ec2-spot-instances).
+There is a spot instance limit associated with your AWS account for each region. You can check your current limit [here](https://console.aws.amazon.com/ec2/v2/home?#Limits:) \(set the region in the upper right corner to your desired region, and search for "spot"\). Note that the listed spot instance limit may misrepresent the actual number of spot instances you can allocate. Your actual spot instance limit depends on the instance type you have requested. In general, you can run a higher number of smaller instance types, or fewer large instance types. For example, even if the limit shows `20`, if you are requesting large instances like `p2.xlarge`, the actual limit may be lower due to the way AWS calculates this limit. If you are not getting the number of spot instances that you are expecting for your instance type, you can request a limit increase [here](https://console.aws.amazon.com/support/home#/case/create?issueType=service-limit-increase&limitType=service-code-ec2-spot-instances).
 
 ## Example spot configuration
 
 ### Only spot instances with backup
 
 ```yaml
-
 spot: true
 
 spot_config:
@@ -84,3 +83,4 @@ spot_config:
 # instance 3: on-demand
 # instance 4: spot
 ```
+

@@ -6,7 +6,7 @@ The API Splitter feature allows you to split traffic between multiple Sync APIs 
 
 After [deploying Sync APIs](deployment.md), you can deploy an API Splitter to provide a single endpoint that can route a request randomly to one of the target Sync APIs. Weights can be assigned to Sync APIs to control the percentage of requests routed to each API.
 
-**API Splitters are only supported on a Cortex cluster (in AWS).**
+**API Splitters are only supported on a Cortex cluster \(in AWS\).**
 
 ## API Splitter Configuration
 
@@ -76,7 +76,7 @@ Note that this will not delete the Sync APIs targeted by the API Splitter.
 
 ## Additional resources
 
-<!-- CORTEX_VERSION_MINOR -->
-* [API Splitter Tutorial](../../../examples/apisplitter/README.md) provides a step-by-step walkthrough for deploying an API Splitter
-* [Sync API Tutorial](../../../examples/sklearn/iris-classifier/README.md) provides a step-by-step walkthough of deploying an iris classifier Sync API
+* [API Splitter Tutorial](https://github.com/vishalbollu/cortex/tree/52bd6fec427918b3e64e27308ba0f582834f48d6/examples/apisplitter/README.md) provides a step-by-step walkthrough for deploying an API Splitter
+* [Sync API Tutorial](iris-classifier.md) provides a step-by-step walkthough of deploying an iris classifier Sync API
 * [CLI documentation](../../miscellaneous/cli.md) lists all CLI commands
+

@@ -2,9 +2,8 @@
 
 _WARNING: you are on the master branch, please refer to the docs on the branch that matches your `cortex version`_
 
-The Cortex cluster may be configured by providing a configuration file to `cortex cluster up` or `cortex cluster configure` via the `--config` flag (e.g. `cortex cluster up --config cluster.yaml`). Below is the schema for the cluster configuration file, with default values shown (unless otherwise specified):
+The Cortex cluster may be configured by providing a configuration file to `cortex cluster up` or `cortex cluster configure` via the `--config` flag \(e.g. `cortex cluster up --config cluster.yaml`\). Below is the schema for the cluster configuration file, with default values shown \(unless otherwise specified\):
 
-<!-- CORTEX_VERSION_MINOR x6 -->
 ```yaml
 # cluster.yaml
 
@@ -85,11 +84,10 @@ spot: false
 ssl_certificate_arn:
 ```
 
-The default docker images used for your Predictors are listed in the instructions for [system packages](../deployments/system-packages.md), and can be overridden in your [Sync API configuration](../deployments/syncapi/api-configuration.md) and in your [Batch API configuration](../deployments/batchapi/api-configuration.md).
+The default docker images used for your Predictors are listed in the instructions for [system packages](../advanced/system-packages.md), and can be overridden in your [Sync API configuration](../deployments/syncapi/api-configuration.md) and in your [Batch API configuration](../deployments/batchapi/api-configuration.md).
 
-The docker images used by the Cortex cluster can also be overridden, although this is not common. They can be configured by adding any of these keys to your cluster configuration file (default values are shown):
+The docker images used by the Cortex cluster can also be overridden, although this is not common. They can be configured by adding any of these keys to your cluster configuration file \(default values are shown\):
 
-<!-- CORTEX_VERSION_BRANCH_STABLE -->
 ```yaml
 # docker image paths
 image_operator: cortexlabs/operator:master
@@ -108,3 +106,4 @@ image_istio_pilot: cortexlabs/istio-pilot:master
 image_istio_citadel: cortexlabs/istio-citadel:master
 image_istio_galley: cortexlabs/istio-galley:master
 ```
+

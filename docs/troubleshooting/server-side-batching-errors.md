@@ -1,4 +1,4 @@
-# Batching errors when max_batch_size/batch_interval are set
+# Serving-side batching errors
 
 _WARNING: you are on the master branch, please refer to the docs on the branch that matches your `cortex version`_
 
@@ -16,7 +16,7 @@ Here is another example of setting the output shape inappropriately for batching
 Batched output tensor has 0 dimensions.
 ```
 
-The solution to these errors is to incorporate into the model's graph another dimension (a placeholder for batch size) placed on the first position for both its input and output.
+The solution to these errors is to incorporate into the model's graph another dimension \(a placeholder for batch size\) placed on the first position for both its input and output.
 
 The following is an example of how the input `x` and the output `y` of the graph could be shaped to be compatible with server-side batching:
 
@@ -31,3 +31,4 @@ with graph.as_default():
     y = tf.placeholder(tf.float32, shape=[batch_size] + output_shape, name="output")
     # ...
 ```
+

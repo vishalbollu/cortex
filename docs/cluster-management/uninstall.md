@@ -6,7 +6,7 @@ _WARNING: you are on the master branch, please refer to the docs on the branch t
 
 1. [AWS credentials](aws-credentials.md)
 2. [Docker](https://docs.docker.com/install)
-3. [Cortex CLI](install.md)
+3. [Cortex CLI](../install.md)
 4. [AWS CLI](https://aws.amazon.com/cli)
 
 ## Uninstalling Cortex
@@ -20,7 +20,7 @@ sudo rm /usr/local/bin/cortex
 rm -rf ~/.cortex
 ```
 
-If you modified your bash profile, you may wish to remove `source <(cortex completion bash)` from it (or remove `source <(cortex completion zsh)` for `zsh`).
+If you modified your bash profile, you may wish to remove `source <(cortex completion bash)` from it \(or remove `source <(cortex completion zsh)` for `zsh`\).
 
 ## Cleaning up AWS
 
@@ -44,3 +44,4 @@ aws logs describe-log-groups --log-group-name-prefix=<log_group> --query logGrou
 ```
 
 If you've configured a custom domain for your APIs, you may wish to remove the SSL Certificate and Hosted Zone for the domain by following these [instructions](../guides/custom-domain.md#cleanup).
+

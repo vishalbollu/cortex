@@ -1,17 +1,17 @@
 # Table of contents
 
 * [Build machine learning APIs](../README.md)
-* [Install](cluster-management/install.md)
-* [Tutorial](../examples/sklearn/iris-classifier/README.md)
+* [Install](install.md)
+* [Tutorial](iris-classifier.md)
 * [GitHub](https://github.com/cortexlabs/cortex)
-* [Examples](https://github.com/cortexlabs/cortex/tree/master/examples)  <!-- CORTEX_VERSION_MINOR -->
+* [Examples](https://github.com/cortexlabs/cortex/tree/master/examples)
 * [Chat with us](https://gitter.im/cortexlabs/cortex)
 * [Email us](mailto:hello@cortex.dev)
 * [We're hiring](https://angel.co/cortex-labs-inc/jobs)
 
 ## Deployments
 
-* [Sync API](deployments/syncapi.md)
+* [Sync API](deployments/syncapi/README.md)
   * [Predictor implementation](deployments/syncapi/predictors.md)
   * [API configuration](deployments/syncapi/api-configuration.md)
   * [API deployment](deployments/syncapi/deployment.md)
@@ -19,23 +19,23 @@
   * [Parallelism](deployments/syncapi/parallelism.md)
   * [Autoscaling](deployments/syncapi/autoscaling.md)
   * [Prediction monitoring](deployments/syncapi/prediction-monitoring.md)
-  * [Tutorial](../examples/sklearn/iris-classifier/README.md)
+  * [Tutorial](deployments/syncapi/iris-classifier.md)
   * [API Splitter](deployments/syncapi/apisplitter.md)
-* [Batch API](deployments/batchapi.md)
+* [Batch API](deployments/batchapi/README.md)
   * [Predictor implementation](deployments/batchapi/predictors.md)
   * [API configuration](deployments/batchapi/api-configuration.md)
   * [API deployment](deployments/batchapi/deployment.md)
   * [Endpoints](deployments/batchapi/endpoints.md)
   * [Job statuses](deployments/batchapi/statuses.md)
-  * [Tutorial](../examples/batch/image-classifier/README.md)
+  * [Tutorial](deployments/batchapi/image-classifier.md)
 
 ## Advanced
 
-* [Compute](deployments/compute.md)
-* [Using GPUs](deployments/gpus.md)
-* [Using Inferentia](deployments/inferentia.md)
-* [Python packages](deployments/python-packages.md)
-* [System packages](deployments/system-packages.md)
+* [Compute](advanced/compute.md)
+* [Using GPUs](advanced/gpus.md)
+* [Using Inferentia](advanced/inferentia.md)
+* [Python packages](advanced/python-packages.md)
+* [System packages](advanced/system-packages.md)
 
 ## Cluster management
 
@@ -59,7 +59,7 @@
 * [API is stuck updating](troubleshooting/stuck-updating.md)
 * [404/503 API responses](troubleshooting/api-request-errors.md)
 * [NVIDIA runtime not found](troubleshooting/nvidia-container-runtime-not-found.md)
-* [TF session in predict()](troubleshooting/tf-session-in-predict.md)
+* [TF session in predict\(\)](troubleshooting/tf-session-in-predict.md)
 * [Serving-side batching errors](troubleshooting/server-side-batching-errors.md)
 
 ## Guides
@@ -75,3 +75,4 @@
 ## Contributing
 
 * [Development](contributing/development.md)
+

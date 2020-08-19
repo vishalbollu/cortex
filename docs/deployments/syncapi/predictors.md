@@ -6,15 +6,15 @@ Once your model is [exported](../../guides/exporting.md), you can implement one 
 
 Which Predictor you use depends on how your model is exported:
 
-* [TensorFlow Predictor](#tensorflow-predictor) if your model is exported as a TensorFlow `SavedModel`
-* [ONNX Predictor](#onnx-predictor) if your model is exported in the ONNX format
-* [Python Predictor](#python-predictor) for all other cases
+* [TensorFlow Predictor](predictors.md#tensorflow-predictor) if your model is exported as a TensorFlow `SavedModel`
+* [ONNX Predictor](predictors.md#onnx-predictor) if your model is exported in the ONNX format
+* [Python Predictor](predictors.md#python-predictor) for all other cases
 
-The response type of the predictor can vary depending on your requirements, see [API responses](#api-responses) below.
+The response type of the predictor can vary depending on your requirements, see [API responses](predictors.md#api-responses) below.
 
 ## Project files
 
-Cortex makes all files in the project directory (i.e. the directory which contains `cortex.yaml`) available for use in your Predictor implementation. Python bytecode files (`*.pyc`, `*.pyo`, `*.pyd`), files or folders that start with `.`, and the api configuration file (e.g. `cortex.yaml`) are excluded.
+Cortex makes all files in the project directory \(i.e. the directory which contains `cortex.yaml`\) available for use in your Predictor implementation. Python bytecode files \(`*.pyc`, `*.pyo`, `*.pyd`\), files or folders that start with `.`, and the api configuration file \(e.g. `cortex.yaml`\) are excluded.
 
 The following files can also be added at the root of the project's directory:
 
@@ -87,16 +87,14 @@ class PythonPredictor:
 
 For proper separation of concerns, it is recommended to use the constructor's `config` parameter for information such as from where to download the model and initialization files, or any configurable model parameters. You define `config` in your [API configuration](api-configuration.md), and it is passed through to your Predictor's constructor.
 
-Your API can accept requests with different types of payloads such as `JSON`-parseable, `bytes` or `starlette.datastructures.FormData` data. Navigate to the [API requests](#api-requests) section to learn about how headers can be used to change the type of `payload` that is passed into your `predict` method.
+Your API can accept requests with different types of payloads such as `JSON`-parseable, `bytes` or `starlette.datastructures.FormData` data. Navigate to the [API requests](predictors.md#api-requests) section to learn about how headers can be used to change the type of `payload` that is passed into your `predict` method.
 
-Your `predictor` method can return different types of objects such as `JSON`-parseable, `string`, and `bytes` objects. Navigate to the [API responses](#api-responses) section to learn about how to configure your `predictor` method to respond with different response codes and content-types.
+Your `predictor` method can return different types of objects such as `JSON`-parseable, `string`, and `bytes` objects. Navigate to the [API responses](predictors.md#api-responses) section to learn about how to configure your `predictor` method to respond with different response codes and content-types.
 
 ### Examples
 
-<!-- CORTEX_VERSION_MINOR -->
 Many of the [examples](https://github.com/cortexlabs/cortex/tree/master/examples) use the Python Predictor, including all of the PyTorch examples.
 
-<!-- CORTEX_VERSION_MINOR -->
 Here is the Predictor for [examples/pytorch/iris-classifier](https://github.com/cortexlabs/cortex/tree/master/examples/pytorch/iris-classifier):
 
 ```python
@@ -207,10 +205,9 @@ torch-neuron==1.0.825.0
 torchvision==0.4.2
 ```
 
-<!-- CORTEX_VERSION_MINOR x3 -->
-The pre-installed system packages are listed in [images/python-predictor-cpu/Dockerfile](https://github.com/cortexlabs/cortex/tree/master/images/python-predictor-cpu/Dockerfile) (for CPU), [images/python-predictor-gpu/Dockerfile](https://github.com/cortexlabs/cortex/tree/master/images/python-predictor-gpu/Dockerfile) (for GPU), or [images/python-predictor-inf/Dockerfile](https://github.com/cortexlabs/cortex/tree/master/images/python-predictor-inf/Dockerfile) (for Inferentia).
+The pre-installed system packages are listed in [images/python-predictor-cpu/Dockerfile](https://github.com/cortexlabs/cortex/tree/master/images/python-predictor-cpu/Dockerfile) \(for CPU\), [images/python-predictor-gpu/Dockerfile](https://github.com/cortexlabs/cortex/tree/master/images/python-predictor-gpu/Dockerfile) \(for GPU\), or [images/python-predictor-inf/Dockerfile](https://github.com/cortexlabs/cortex/tree/master/images/python-predictor-inf/Dockerfile) \(for Inferentia\).
 
-If your application requires additional dependencies, you can install additional [Python packages](../python-packages.md) and [system packages](../system-packages.md).
+If your application requires additional dependencies, you can install additional [Python packages](../../advanced/python-packages.md) and [system packages](../../advanced/system-packages.md).
 
 ## TensorFlow Predictor
 
@@ -253,23 +250,20 @@ class TensorFlowPredictor:
         pass
 ```
 
-<!-- CORTEX_VERSION_MINOR -->
 Cortex provides a `tensorflow_client` to your Predictor's constructor. `tensorflow_client` is an instance of [TensorFlowClient](https://github.com/cortexlabs/cortex/tree/master/pkg/workloads/cortex/lib/client/tensorflow.py) that manages a connection to a TensorFlow Serving container to make predictions using your model. It should be saved as an instance variable in your Predictor, and your `predict()` function should call `tensorflow_client.predict()` to make an inference with your exported TensorFlow model. Preprocessing of the JSON payload and postprocessing of predictions can be implemented in your `predict()` function as well.
 
-When multiple models are defined using the Predictor's `models` field, the `tensorflow_client.predict()` method expects a second argument `model_name` which must hold the name of the model that you want to use for inference (for example: `self.client.predict(payload, "iris-classifier")`). See the [multi model guide](../../guides/multi-model.md#tensorflow-predictor) for more information.
+When multiple models are defined using the Predictor's `models` field, the `tensorflow_client.predict()` method expects a second argument `model_name` which must hold the name of the model that you want to use for inference \(for example: `self.client.predict(payload, "iris-classifier")`\). See the [multi model guide](../../guides/multi-model.md#tensorflow-predictor) for more information.
 
 For proper separation of concerns, it is recommended to use the constructor's `config` parameter for information such as configurable model parameters or download links for initialization files. You define `config` in your [API configuration](api-configuration.md), and it is passed through to your Predictor's constructor.
 
-Your API can accept requests with different types of payloads such as `JSON`-parseable, `bytes` or `starlette.datastructures.FormData` data. Navigate to the [API requests](#api-requests) section to learn about how headers can be used to change the type of `payload` that is passed into your `predict` method.
+Your API can accept requests with different types of payloads such as `JSON`-parseable, `bytes` or `starlette.datastructures.FormData` data. Navigate to the [API requests](predictors.md#api-requests) section to learn about how headers can be used to change the type of `payload` that is passed into your `predict` method.
 
-Your `predictor` method can return different types of objects such as `JSON`-parseable, `string`, and `bytes` objects. Navigate to the [API responses](#api-responses) section to learn about how to configure your `predictor` method to respond with different response codes and content-types.
+Your `predictor` method can return different types of objects such as `JSON`-parseable, `string`, and `bytes` objects. Navigate to the [API responses](predictors.md#api-responses) section to learn about how to configure your `predictor` method to respond with different response codes and content-types.
 
 ### Examples
 
-<!-- CORTEX_VERSION_MINOR -->
 Most of the examples in [examples/tensorflow](https://github.com/cortexlabs/cortex/tree/master/examples/tensorflow) use the TensorFlow Predictor.
 
-<!-- CORTEX_VERSION_MINOR -->
 Here is the Predictor for [examples/tensorflow/iris-classifier](https://github.com/cortexlabs/cortex/tree/master/examples/tensorflow/iris-classifier):
 
 ```python
@@ -303,10 +297,9 @@ tensorflow-serving-api==2.1.0
 tensorflow==2.1.0
 ```
 
-<!-- CORTEX_VERSION_MINOR -->
 The pre-installed system packages are listed in [images/tensorflow-predictor/Dockerfile](https://github.com/cortexlabs/cortex/tree/master/images/tensorflow-predictor/Dockerfile).
 
-If your application requires additional dependencies, you can install additional [Python packages](../python-packages.md) and [system packages](../system-packages.md).
+If your application requires additional dependencies, you can install additional [Python packages](../../advanced/python-packages.md) and [system packages](../../advanced/system-packages.md).
 
 ## ONNX Predictor
 
@@ -349,20 +342,18 @@ class ONNXPredictor:
         pass
 ```
 
-<!-- CORTEX_VERSION_MINOR -->
 Cortex provides an `onnx_client` to your Predictor's constructor. `onnx_client` is an instance of [ONNXClient](https://github.com/cortexlabs/cortex/tree/master/pkg/workloads/cortex/lib/client/onnx.py) that manages an ONNX Runtime session to make predictions using your model. It should be saved as an instance variable in your Predictor, and your `predict()` function should call `onnx_client.predict()` to make an inference with your exported ONNX model. Preprocessing of the JSON payload and postprocessing of predictions can be implemented in your `predict()` function as well.
 
-When multiple models are defined using the Predictor's `models` field, the `onnx_client.predict()` method expects a second argument `model_name` which must hold the name of the model that you want to use for inference (for example: `self.client.predict(model_input, "iris-classifier")`). See the [multi model guide](../../guides/multi-model.md#onnx-predictor) for more information.
+When multiple models are defined using the Predictor's `models` field, the `onnx_client.predict()` method expects a second argument `model_name` which must hold the name of the model that you want to use for inference \(for example: `self.client.predict(model_input, "iris-classifier")`\). See the [multi model guide](../../guides/multi-model.md#onnx-predictor) for more information.
 
 For proper separation of concerns, it is recommended to use the constructor's `config` parameter for information such as configurable model parameters or download links for initialization files. You define `config` in your [API configuration](api-configuration.md), and it is passed through to your Predictor's constructor.
 
-Your API can accept requests with different types of payloads such as `JSON`-parseable, `bytes` or `starlette.datastructures.FormData` data. Navigate to the [API requests](#api-requests) section to learn about how headers can be used to change the type of `payload` that is passed into your `predict` method.
+Your API can accept requests with different types of payloads such as `JSON`-parseable, `bytes` or `starlette.datastructures.FormData` data. Navigate to the [API requests](predictors.md#api-requests) section to learn about how headers can be used to change the type of `payload` that is passed into your `predict` method.
 
-Your `predictor` method can return different types of objects such as `JSON`-parseable, `string`, and `bytes` objects. Navigate to the [API responses](#api-responses) section to learn about how to configure your `predictor` method to respond with different response codes and content-types.
+Your `predictor` method can return different types of objects such as `JSON`-parseable, `string`, and `bytes` objects. Navigate to the [API responses](predictors.md#api-responses) section to learn about how to configure your `predictor` method to respond with different response codes and content-types.
 
 ### Examples
 
-<!-- CORTEX_VERSION_MINOR -->
 [examples/onnx/iris-classifier](https://github.com/cortexlabs/cortex/tree/master/examples/onnx/iris-classifier) uses the ONNX Predictor:
 
 ```python
@@ -400,20 +391,19 @@ pyyaml==5.3.1
 requests==2.23.0
 ```
 
-<!-- CORTEX_VERSION_MINOR x2 -->
-The pre-installed system packages are listed in [images/onnx-predictor-cpu/Dockerfile](https://github.com/cortexlabs/cortex/tree/master/images/onnx-predictor-cpu/Dockerfile) (for CPU) or [images/onnx-predictor-gpu/Dockerfile](https://github.com/cortexlabs/cortex/tree/master/images/onnx-predictor-gpu/Dockerfile) (for GPU).
+The pre-installed system packages are listed in [images/onnx-predictor-cpu/Dockerfile](https://github.com/cortexlabs/cortex/tree/master/images/onnx-predictor-cpu/Dockerfile) \(for CPU\) or [images/onnx-predictor-gpu/Dockerfile](https://github.com/cortexlabs/cortex/tree/master/images/onnx-predictor-gpu/Dockerfile) \(for GPU\).
 
-If your application requires additional dependencies, you can install additional [Python packages](../python-packages.md) and [system packages](../system-packages.md).
+If your application requires additional dependencies, you can install additional [Python packages](../../advanced/python-packages.md) and [system packages](../../advanced/system-packages.md).
 
 ## API requests
 
 The type of the `payload` parameter in `predict(self, payload)` can vary based on the content type of the request. The `payload` parameter is parsed according to the `Content-Type` header in the request:
 
 1. For `Content-Type: application/json`, `payload` will be the parsed JSON body.
-1. For `Content-Type: multipart/form-data` / `Content-Type: application/x-www-form-urlencoded`, `payload` will be `starlette.datastructures.FormData` (key-value pairs where the value is a `string` for form data, or `starlette.datastructures.UploadFile` for file uploads, see [Starlette's documentation](https://www.starlette.io/requests/#request-files)).
-1. For all other `Content-Type` values, `payload` will be the raw `bytes` of the request body.
+2. For `Content-Type: multipart/form-data` / `Content-Type: application/x-www-form-urlencoded`, `payload` will be `starlette.datastructures.FormData` \(key-value pairs where the value is a `string` for form data, or `starlette.datastructures.UploadFile` for file uploads, see [Starlette's documentation](https://www.starlette.io/requests/#request-files)\).
+3. For all other `Content-Type` values, `payload` will be the raw `bytes` of the request body.
 
-The `payload` parameter type will be a Python object (*lists*, *dicts*, *numbers*) if a request with a JSON payload is made:
+The `payload` parameter type will be a Python object \(_lists_, _dicts_, _numbers_\) if a request with a JSON payload is made:
 
 ```bash
 $ curl http://***.amazonaws.com/my-api \
@@ -465,12 +455,9 @@ $ curl http://***.amazonaws.com/my-api \
 
 The response of your `predict()` function may be:
 
-1. A JSON-serializable object (*lists*, *dictionaries*, *numbers*, etc.)
-
-2. A `string` object (e.g. `"class 1"`)
-
-3. A `bytes` object (e.g. `bytes(4)` or `pickle.dumps(obj)`)
-
+1. A JSON-serializable object \(_lists_, _dictionaries_, _numbers_, etc.\)
+2. A `string` object \(e.g. `"class 1"`\)
+3. A `bytes` object \(e.g. `bytes(4)` or `pickle.dumps(obj)`\)
 4. An instance of [starlette.responses.Response](https://www.starlette.io/responses/#response)
 
 Here are some examples:
@@ -505,3 +492,4 @@ def predict(self, payload):
         content=data, media_type="text/plain")
     return response
 ```
+

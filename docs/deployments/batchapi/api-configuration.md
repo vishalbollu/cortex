@@ -2,9 +2,9 @@
 
 _WARNING: you are on the master branch, please refer to the docs on the branch that matches your `cortex version`_
 
-Once your model is [exported](../../guides/exporting.md) and you've implemented a [Predictor](predictors.md), you can configure your API via a yaml file (typically named `cortex.yaml`).
+Once your model is [exported](../../guides/exporting.md) and you've implemented a [Predictor](predictors.md), you can configure your API via a yaml file \(typically named `cortex.yaml`\).
 
-Reference the section below which corresponds to your Predictor type: [Python](#python-predictor), [TensorFlow](#tensorflow-predictor), or [ONNX](#onnx-predictor).
+Reference the section below which corresponds to your Predictor type: [Python](api-configuration.md#python-predictor), [TensorFlow](api-configuration.md#tensorflow-predictor), or [ONNX](api-configuration.md#onnx-predictor).
 
 ## Python Predictor
 
@@ -28,7 +28,7 @@ Reference the section below which corresponds to your Predictor type: [Python](#
     mem: <string>  # memory request per worker, e.g. 200Mi or 1Gi (default: Null)
 ```
 
-See additional documentation for [compute](../compute.md), [networking](../networking.md), and [overriding API images](../system-packages.md).
+See additional documentation for [compute](../../advanced/compute.md), [networking](), and [overriding API images](../../advanced/system-packages.md).
 
 ## TensorFlow Predictor
 
@@ -63,7 +63,7 @@ See additional documentation for [compute](../compute.md), [networking](../netwo
     mem: <string>  # memory request per worker, e.g. 200Mi or 1Gi (default: Null)
 ```
 
-See additional documentation for [compute](../compute.md), [networking](../networking.md), and [overriding API images](../system-packages.md).
+See additional documentation for [compute](../../advanced/compute.md), [networking](), and [overriding API images](../../advanced/system-packages.md).
 
 ## ONNX Predictor
 
@@ -92,4 +92,5 @@ See additional documentation for [compute](../compute.md), [networking](../netwo
     mem: <string>  # memory request per worker, e.g. 200Mi or 1Gi (default: Null)
 ```
 
-See additional documentation for [compute](../compute.md), [networking](../networking.md), and [overriding API images](../system-packages.md).
+See additional documentation for [compute](../../advanced/compute.md), [networking](), and [overriding API images](../../advanced/system-packages.md).
+
