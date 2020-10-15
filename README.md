@@ -50,3 +50,18 @@ See our [installation guide](https://docs.cortex.dev/install), then deploy one o
 
 Check out our [docs](https://docs.cortex.dev) and join our [community](https://gitter.im/cortexlabs/cortex).
 
+{% tabs %}
+{% tab title="Python" %}
+```
+import test
+blah
+```
+{% endtab %}
+
+{% tab title="Bash" %}
+```bash
+asdfasdf
+```
+{% endtab %}
+{% endtabs %}
+
