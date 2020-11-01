@@ -6,7 +6,7 @@
   * [cluster\_client](#cluster_client)
   * [env\_list](#env_list)
   * [env\_delete](#env_delete)
-* [cortex.client.Client](#cortex-client-Client)
+* [cortex.client.Client](#cortex-client-client)
   * [deploy](#deploy)
   * [get\_api](#get_api)
   * [list\_apis](#list_apis)
